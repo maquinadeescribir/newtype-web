@@ -201,11 +201,15 @@ select {
 }
 
 .char-figure[data-state='idle'] {
-  animation: breathe 3.4s ease-in-out infinite;
+  animation: breathe 3.6s ease-in-out infinite;
+}
+
+.char-figure[data-state='working'] {
+  animation: breathe 2.4s ease-in-out infinite;
 }
 
 .char-figure[data-state='speaking'] {
-  animation: breathe 3.4s ease-in-out infinite;
+  animation: speak-bob 0.7s ease-in-out infinite;
 }
 
 .char-figure[data-state='listening'] {
@@ -217,11 +221,11 @@ select {
 }
 
 .char-figure[data-state='alert'] {
-  transform: translateY(-3px);
+  transform: translateY(-3px) rotate(2deg);
 }
 
 .char-figure[data-state='checking-in'] {
-  transform: translateY(1px);
+  transform: translateY(1.5px);
 }
 
 @keyframes breathe {
@@ -231,6 +235,16 @@ select {
   }
   50% {
     transform: translateY(-3px);
+  }
+}
+
+@keyframes speak-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-1.5px) rotate(0.6deg);
   }
 }
 
