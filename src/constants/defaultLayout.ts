@@ -11,4 +11,5 @@ export const defaultLayout: TileConfig[] = [
   { type: 'scroll', size: '1x1', position: { row: 2, col: 1 }, visible: true },
   { type: 'goals', size: '1x1', position: { row: 2, col: 2 }, visible: true },
   { type: 'context', size: '1x1', position: { row: 2, col: 3 }, visible: true },
+  { type: 'ahh', size: '1x1', position: { row: 2, col: 4 }, visible: true },
 ]

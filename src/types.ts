@@ -7,6 +7,7 @@ export type TileType =
   | 'scroll'
   | 'goals'
   | 'context'
+  | 'ahh'
 
 export interface TileConfig {
   type: TileType
@@ -75,6 +76,7 @@ export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize;
   scroll: { label: 'Scroll Intervention', defaultSize: '1x1', icon: '📵' },
   goals: { label: 'Goals', defaultSize: '1x1', icon: '🎯' },
   context: { label: 'Context Resume', defaultSize: '1x1', icon: '↩️' },
+  ahh: { label: 'AHH Button', defaultSize: '1x1', icon: '💥' },
 }
 
 export const ALL_TILE_TYPES = Object.keys(TILE_META) as TileType[]

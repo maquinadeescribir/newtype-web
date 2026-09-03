@@ -8,6 +8,7 @@ import MedTrackerTile from '../tiles/MedTrackerTile'
 import ScrollInterventionTile from '../tiles/ScrollInterventionTile'
 import GoalsTile from '../tiles/GoalsTile'
 import ContextResumeTile from '../tiles/ContextResumeTile'
+import AhhButtonTile from '../tiles/AhhButtonTile'
 
 const TILE_COMPONENTS: Record<TileType, () => JSX.Element> = {
   character: CharacterTile,
@@ -16,6 +17,7 @@ const TILE_COMPONENTS: Record<TileType, () => JSX.Element> = {
   scroll: ScrollInterventionTile,
   goals: GoalsTile,
   context: ContextResumeTile,
+  ahh: AhhButtonTile,
 }
 
 export default function TileGrid() {
