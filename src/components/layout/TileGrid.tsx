@@ -35,7 +35,7 @@ export default function TileGrid() {
         }
         return (
           <div key={tile.type} className={`tile tile-${tile.type}`} style={style}>
-            {tile.type !== 'character' && (
+            {tile.type !== 'character' && tile.type !== 'med' && (
               <div className="tile-header">
                 <span className="icon">{meta.icon}</span>
                 <span>{meta.label}</span>

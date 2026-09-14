@@ -41,9 +41,9 @@ export function buildResponse(input: string, ctx: DialogueContext): DialogueResu
     return { text: runningSummary(ctx) }
   }
 
-  // meds
-  if (/med|medication|pill|vyvanse|dose/.test(lower)) {
-    return { text: medSummary(ctx) }
+  // routine items (stealth: no "med"/"medication" in the reply)
+  if (/med|medication|pill|vyvanse|dose|vitamin|supplement|routine/.test(lower)) {
+    return { text: routineSummary(ctx) }
   }
 
   // goals
@@ -68,30 +68,31 @@ export function buildResponse(input: string, ctx: DialogueContext): DialogueResu
 
   // fallback
   return {
-    text: `I run timers, track meds, and watch scroll time. Try "start a 25 minute timer called report draft".`,
+    text: `I run timers, track your routine, and watch scroll time. Try "start a 25 minute timer called report draft".`,
   }
 }
 
 function runningSummary(ctx: DialogueContext): string {
   const active = ctx.timers.filter((t) => t.status === 'running' || t.status === 'paused')
   if (active.length === 0) return 'Nothing running. Start a timer.'
-  let out = active
+  return active
     .map((t) => {
       const v = t.type === 'stopwatch' ? formatMs(t.elapsedMs) : formatMs(t.remainingMs)
       const state = t.status === 'paused' ? 'paused' : 'left'
       return `${t.label} — ${v} ${state}`
     })
     .join('. ')
-  const med = ctx.medications[0]
-  if (med) out += `. Meds ${med.lastTakenAt ? `taken ${formatRelative(med.lastTakenAt)}` : 'not logged today'}.`
-  return out
 }
 
-function medSummary(ctx: DialogueContext): string {
-  const med = ctx.medications[0]
-  if (!med) return 'No medication set up. Tap the med tile to add one.'
-  if (med.lastTakenAt) return `${med.name} — taken ${formatRelative(med.lastTakenAt)}.`
-  return `${med.name} — not logged today.${med.scheduleTime ? ` Due ${med.scheduleTime}.` : ''}`
+function routineSummary(ctx: DialogueContext): string {
+  const items = ctx.medications
+  if (items.length === 0) return 'Nothing on your routine yet. Tap the routine tile to add an item.'
+  return items
+    .map((m) => {
+      if (m.lastTakenAt) return `${m.name}: logged ${formatRelative(m.lastTakenAt)}`
+      return `${m.name}: not done${m.scheduleTime ? ` (due ${m.scheduleTime})` : ''}`
+    })
+    .join('. ')
 }
 
 function goalsSummary(ctx: DialogueContext): string {
@@ -104,8 +105,8 @@ function factsSummary(ctx: DialogueContext): string {
   const facts: string[] = []
   const active = ctx.timers.filter((t) => t.status !== 'expired')
   if (active.length) facts.push(`${active.length} timer${active.length > 1 ? 's' : ''} going`)
-  const med = ctx.medications[0]
-  if (med?.lastTakenAt) facts.push(`meds taken ${formatRelative(med.lastTakenAt)}`)
+  const item = ctx.medications[0]
+  if (item?.lastTakenAt) facts.push(`${item.name} done ${formatRelative(item.lastTakenAt)}`)
   const activeGoals = ctx.goals.filter((g) => g.status === 'active')
   if (activeGoals.length) facts.push(`${activeGoals.length} active goal${activeGoals.length > 1 ? 's' : ''}`)
   if (ctx.lastActivity) facts.push(`last working on "${ctx.lastActivity}"`)

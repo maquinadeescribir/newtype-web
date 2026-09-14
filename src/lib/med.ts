@@ -10,6 +10,10 @@ function sameDay(a: number, b: number): boolean {
   )
 }
 
+export function isLoggedToday(med: Medication, now = Date.now()): boolean {
+  return med.lastTakenAt != null && sameDay(med.lastTakenAt, now)
+}
+
 export function computeMedState(med: Medication, now = Date.now()): MedState {
   const takenToday = med.lastTakenAt != null && sameDay(med.lastTakenAt, now)
 

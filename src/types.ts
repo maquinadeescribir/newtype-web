@@ -32,16 +32,13 @@ export interface Timer {
   createdAt: number
 }
 
-export type MedShape = 'pill' | 'flower' | 'star'
 export type MedState = 'green' | 'yellow' | 'orange' | 'red' | 'gray'
 
 export interface Medication {
   id: string
   name: string
-  dosage: string
-  shape: MedShape
   lastTakenAt: number | null
-  scheduleTime: string | null // "HH:MM" 24h, or null = no schedule
+  scheduleTime: string | null
   lateThresholdMin: number
 }
 
@@ -72,7 +69,7 @@ export interface ContextSnapshot {
 export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize; icon: string }> = {
   character: { label: 'Character', defaultSize: '2x2', icon: '🧑‍💼' },
   timer: { label: 'Timer Stack', defaultSize: '2x2', icon: '⏱️' },
-  med: { label: 'Med Tracker', defaultSize: '1x1', icon: '💊' },
+  med: { label: 'Routine', defaultSize: '1x1', icon: '·' },
   scroll: { label: 'Scroll Intervention', defaultSize: '1x1', icon: '📵' },
   goals: { label: 'Goals', defaultSize: '1x1', icon: '🎯' },
   context: { label: 'Context Resume', defaultSize: '1x1', icon: '↩️' },

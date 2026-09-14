@@ -33,6 +33,7 @@ interface AppStore {
   addMedication: (m: Omit<Medication, 'id'>) => void
   updateMedication: (id: string, patch: Partial<Medication>) => void
   logMed: (id: string) => void
+  deleteMedication: (id: string) => void
 
   goals: Goal[]
   addGoal: (g: Omit<Goal, 'id' | 'createdAt'>) => void
@@ -170,6 +171,7 @@ export const useAppStore = create<AppStore>()(
         set({ medications: get().medications.map((m) => (m.id === id ? { ...m, ...patch } : m)) }),
       logMed: (id) =>
         set({ medications: get().medications.map((m) => (m.id === id ? { ...m, lastTakenAt: Date.now() } : m)) }),
+      deleteMedication: (id) => set({ medications: get().medications.filter((m) => m.id !== id) }),
 
       goals: [],
       addGoal: (g) => {
