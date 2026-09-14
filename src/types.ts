@@ -8,6 +8,17 @@ export type TileType =
   | 'goals'
   | 'context'
   | 'ahh'
+  | 'breathing'
+  | 'stretch'
+  | 'read'
+  | 'quicktask'
+  | 'briefing'
+  | 'impact'
+  | 'notes'
+  | 'mood'
+  | 'focus'
+  | 'nextevent'
+  | 'weather'
 
 export interface TileConfig {
   type: TileType
@@ -74,6 +85,17 @@ export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize;
   goals: { label: 'Goals', defaultSize: '1x1', icon: '🎯' },
   context: { label: 'Context Resume', defaultSize: '1x1', icon: '↩️' },
   ahh: { label: 'AHH Button', defaultSize: '1x1', icon: '💥' },
+  breathing: { label: 'Breathing', defaultSize: '1x1', icon: '🫁' },
+  stretch: { label: 'Stretch Break', defaultSize: '1x1', icon: '🧘' },
+  read: { label: 'Read Break', defaultSize: '1x1', icon: '📖' },
+  quicktask: { label: 'Quick Task', defaultSize: '1x1', icon: '⚡' },
+  briefing: { label: 'Briefing', defaultSize: '2x1', icon: '🌅' },
+  impact: { label: 'Impact Log', defaultSize: '2x1', icon: '📊' },
+  notes: { label: 'Notes', defaultSize: '1x1', icon: '📝' },
+  mood: { label: 'Mood', defaultSize: '1x1', icon: '🎭' },
+  focus: { label: 'Focus Mode', defaultSize: '1x1', icon: '🔕' },
+  nextevent: { label: 'Next Event', defaultSize: '1x1', icon: '📅' },
+  weather: { label: 'Weather', defaultSize: '1x1', icon: '🌤️' },
 }
 
 export const ALL_TILE_TYPES = Object.keys(TILE_META) as TileType[]

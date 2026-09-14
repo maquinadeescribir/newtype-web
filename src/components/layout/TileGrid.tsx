@@ -9,8 +9,9 @@ import ScrollInterventionTile from '../tiles/ScrollInterventionTile'
 import GoalsTile from '../tiles/GoalsTile'
 import ContextResumeTile from '../tiles/ContextResumeTile'
 import AhhButtonTile from '../tiles/AhhButtonTile'
+import MockupTile from '../tiles/MockupTile'
 
-const TILE_COMPONENTS: Record<TileType, () => JSX.Element> = {
+const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
   character: CharacterTile,
   timer: TimerStackTile,
   med: MedTrackerTile,
@@ -27,21 +28,22 @@ export default function TileGrid() {
   return (
     <div className="grid">
       {visible.map((tile) => {
-        const Comp = TILE_COMPONENTS[tile.type]
+        const Built = BUILT_TILES[tile.type]
+        const isMock = !Built
         const meta = TILE_META[tile.type]
         const style: CSSProperties = {
           gridColumn: `${tile.position.col + 1} / span ${tileCols(tile.size)}`,
           gridRow: `${tile.position.row + 1} / span ${tileRows(tile.size)}`,
         }
         return (
-          <div key={tile.type} className={`tile tile-${tile.type}`} style={style}>
+          <div key={tile.type} className={`tile tile-${tile.type}${isMock ? ' tile-mock' : ''}`} style={style}>
             {tile.type !== 'character' && tile.type !== 'med' && (
               <div className="tile-header">
                 <span className="icon">{meta.icon}</span>
                 <span>{meta.label}</span>
               </div>
             )}
-            <Comp />
+            {Built ? <Built /> : <MockupTile type={tile.type} />}
           </div>
         )
       })}
