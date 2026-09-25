@@ -43,8 +43,9 @@ export default function TileGrid() {
         const Built = BUILT_TILES[tile.type]
         const isMock = !Built
         const meta = TILE_META[tile.type]
+        const isCharacter = tile.type === 'character'
         const style: CSSProperties = {
-          gridColumn: `${tile.position.col + 1} / span ${tileCols(tile.size)}`,
+          gridColumn: isCharacter ? '1 / -1' : `${tile.position.col + 1} / span ${tileCols(tile.size)}`,
           gridRow: `${tile.position.row + 1} / span ${tileRows(tile.size)}`,
         }
         return (

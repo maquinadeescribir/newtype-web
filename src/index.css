@@ -114,18 +114,7 @@ select {
   margin: 0 auto;
 }
 
-@media (max-width: 980px) {
-  .grid {
-    grid-template-columns: repeat(4, 1fr);
-    grid-auto-rows: 140px;
-  }
-}
-
 @media (max-width: 620px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-auto-rows: 132px;
-  }
   .dashboard,
   .topbar {
     padding-left: 12px;
