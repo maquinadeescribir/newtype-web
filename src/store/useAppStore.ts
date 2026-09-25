@@ -1,6 +1,17 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { TileConfig, Timer, Medication, Goal, CharacterState, Influencer } from '../types'
+import type {
+  TileConfig,
+  Timer,
+  Medication,
+  Goal,
+  CharacterState,
+  Influencer,
+  LogEntry,
+  LogKind,
+  HyperItem,
+  Hyperfixation,
+} from '../types'
 import { TILE_META } from '../types'
 import { TIMER_COLORS } from '../constants/theme'
 import { defaultLayout } from '../constants/defaultLayout'
@@ -8,6 +19,8 @@ import { SEED_INFLUENCERS } from '../data/community'
 import { uid, tileRows } from '../lib/util'
 
 let timerColorIndex = 0
+
+const LOG_CAP = 300
 
 interface AppStore {
   onboardingComplete: boolean
@@ -50,6 +63,17 @@ interface AppStore {
   activePanel: string | null
   setActivePanel: (p: string | null) => void
 
+  log: LogEntry[]
+  logEvent: (kind: LogKind, text: string) => void
+
+  hyperfixation: Hyperfixation | null
+  hyperfixationItems: HyperItem[]
+  hyperfixationHistory: Hyperfixation[]
+  setHyperfixation: (topic: string) => void
+  addHyperfixationItem: (text: string, url?: string) => void
+  deleteHyperfixationItem: (id: string) => void
+  clearHyperfixation: () => void
+
   scrollEnabled: boolean
   scrollThresholdMin: number
   scrollCoolDownMin: number
@@ -85,7 +109,10 @@ export const useAppStore = create<AppStore>()(
       onboardingComplete: false,
       onboardingStep: 0,
       setOnboardingStep: (n) => set({ onboardingStep: n }),
-      completeOnboarding: () => set({ onboardingComplete: true }),
+      completeOnboarding: () => {
+        set({ onboardingComplete: true })
+        get().logEvent('app', 'Onboarding complete')
+      },
       resetOnboarding: () => set({ onboardingComplete: false, onboardingStep: 0 }),
 
       tiles: defaultLayout,
@@ -94,6 +121,7 @@ export const useAppStore = create<AppStore>()(
         const existing = tiles.find((t) => t.type === type)
         if (existing) {
           set({ tiles: tiles.map((t) => (t.type === type ? { ...t, visible: true } : t)) })
+          get().logEvent('app', `Tile shown: ${TILE_META[type].label}`)
           return
         }
         const meta = TILE_META[type]
@@ -101,12 +129,17 @@ export const useAppStore = create<AppStore>()(
         set({
           tiles: [...tiles, { type, size: meta.defaultSize, position: { row: maxRow, col: 0 }, visible: true }],
         })
+        get().logEvent('app', `Tile added: ${TILE_META[type].label}`)
       },
-      removeTile: (type) =>
-        set({ tiles: get().tiles.map((t) => (t.type === type ? { ...t, visible: false } : t)) }),
-      resizeTile: (type, size) =>
-        set({ tiles: get().tiles.map((t) => (t.type === type ? { ...t, size } : t)) }),
-      resetLayout: () => set({ tiles: defaultLayout }),
+      removeTile: (type) => {
+        set({ tiles: get().tiles.map((t) => (t.type === type ? { ...t, visible: false } : t)) })
+        get().logEvent('app', `Tile hidden: ${TILE_META[type].label}`)
+      },
+      resizeTile: (type, size) => set({ tiles: get().tiles.map((t) => (t.type === type ? { ...t, size } : t)) }),
+      resetLayout: () => {
+        set({ tiles: defaultLayout })
+        get().logEvent('app', 'Layout reset to default')
+      },
 
       timers: [],
       createTimer: (label, durationMin, type = 'countdown') => {
@@ -125,6 +158,7 @@ export const useAppStore = create<AppStore>()(
           createdAt: now,
         }
         set({ timers: [...get().timers, timer] })
+        get().logEvent('timer', `Timer started: ${label} · ${durationMin}m`)
       },
       createStopwatch: (label) => {
         const now = Date.now()
@@ -141,22 +175,33 @@ export const useAppStore = create<AppStore>()(
           createdAt: now,
         }
         set({ timers: [...get().timers, timer] })
+        get().logEvent('timer', `Stopwatch started: ${label}`)
       },
-      pauseTimer: (id) =>
-        set({ timers: get().timers.map((t) => (t.id === id ? { ...t, status: 'paused' as const } : t)) }),
-      resumeTimer: (id) =>
+      pauseTimer: (id) => {
+        const t = get().timers.find((x) => x.id === id)
+        set({ timers: get().timers.map((x) => (x.id === id ? { ...x, status: 'paused' as const } : x)) })
+        if (t) get().logEvent('timer', `Timer paused: ${t.label}`)
+      },
+      resumeTimer: (id) => {
+        const t = get().timers.find((x) => x.id === id)
         set({
-          timers: get().timers.map((t) =>
-            t.id === id
+          timers: get().timers.map((x) =>
+            x.id === id
               ? {
-                  ...t,
-                  status: t.type === 'countdown' && t.remainingMs <= 0 ? ('expired' as const) : ('running' as const),
+                  ...x,
+                  status: x.type === 'countdown' && x.remainingMs <= 0 ? ('expired' as const) : ('running' as const),
                   lastTickAt: Date.now(),
                 }
-              : t,
+              : x,
           ),
-        }),
-      deleteTimer: (id) => set({ timers: get().timers.filter((t) => t.id !== id) }),
+        })
+        if (t) get().logEvent('timer', `Timer resumed: ${t.label}`)
+      },
+      deleteTimer: (id) => {
+        const t = get().timers.find((x) => x.id === id)
+        set({ timers: get().timers.filter((x) => x.id !== id) })
+        if (t) get().logEvent('timer', `Timer removed: ${t.label}`)
+      },
       tickTimers: (now) => {
         const timers = get().timers
         let changed = false
@@ -166,7 +211,10 @@ export const useAppStore = create<AppStore>()(
           if (t.type === 'countdown') {
             const remainingMs = t.remainingMs - delta
             changed = true
-            if (remainingMs <= 0) return { ...t, remainingMs: 0, lastTickAt: now, status: 'expired' as const }
+            if (remainingMs <= 0) {
+              get().logEvent('timer', `Timer done: ${t.label}`)
+              return { ...t, remainingMs: 0, lastTickAt: now, status: 'expired' as const }
+            }
             return { ...t, remainingMs, lastTickAt: now }
           }
           changed = true
@@ -176,12 +224,22 @@ export const useAppStore = create<AppStore>()(
       },
 
       medications: [],
-      addMedication: (m) => set({ medications: [...get().medications, { ...m, id: uid() }] }),
+      addMedication: (m) => {
+        set({ medications: [...get().medications, { ...m, id: uid() }] })
+        get().logEvent('reminder', `Reminder added: ${m.name}`)
+      },
       updateMedication: (id, patch) =>
         set({ medications: get().medications.map((m) => (m.id === id ? { ...m, ...patch } : m)) }),
-      logMed: (id) =>
-        set({ medications: get().medications.map((m) => (m.id === id ? { ...m, lastTakenAt: Date.now() } : m)) }),
-      deleteMedication: (id) => set({ medications: get().medications.filter((m) => m.id !== id) }),
+      logMed: (id) => {
+        const m = get().medications.find((x) => x.id === id)
+        set({ medications: get().medications.map((x) => (x.id === id ? { ...x, lastTakenAt: Date.now() } : x)) })
+        if (m) get().logEvent('reminder', `Logged: ${m.name}`)
+      },
+      deleteMedication: (id) => {
+        const m = get().medications.find((x) => x.id === id)
+        set({ medications: get().medications.filter((x) => x.id !== id) })
+        if (m) get().logEvent('reminder', `Reminder removed: ${m.name}`)
+      },
 
       goals: [],
       addGoal: (g) => {
@@ -190,30 +248,89 @@ export const useAppStore = create<AppStore>()(
         set({
           goals: [...get().goals, { ...g, id: uid(), createdAt: Date.now() }],
         })
+        get().logEvent('goal', `Goal added: ${g.title}`)
       },
-      updateGoal: (id, patch) =>
-        set({ goals: get().goals.map((g) => (g.id === id ? { ...g, ...patch } : g)) }),
-      deleteGoal: (id) => set({ goals: get().goals.filter((g) => g.id !== id) }),
+      updateGoal: (id, patch) => {
+        const prev = get().goals.find((g) => g.id === id)
+        set({ goals: get().goals.map((g) => (g.id === id ? { ...g, ...patch } : g)) })
+        if (prev && patch.status === 'completed' && prev.status !== 'completed') {
+          get().logEvent('goal', `Goal completed: ${prev.title}`)
+        }
+      },
+      deleteGoal: (id) => {
+        const g = get().goals.find((x) => x.id === id)
+        set({ goals: get().goals.filter((x) => x.id !== id) })
+        if (g) get().logEvent('goal', `Goal removed: ${g.title}`)
+      },
 
       influencers: SEED_INFLUENCERS,
-      addInfluencer: (i) =>
-        set({ influencers: [{ ...i, id: uid(), following: false }, ...get().influencers] }),
-      toggleFollow: (id) =>
+      addInfluencer: (i) => {
+        set({ influencers: [{ ...i, id: uid(), following: false }, ...get().influencers] })
+        get().logEvent('community', `Added account: @${i.handle}`)
+      },
+      toggleFollow: (id) => {
+        const x = get().influencers.find((i) => i.id === id)
         set({
-          influencers: get().influencers.map((x) => (x.id === id ? { ...x, following: !x.following } : x)),
-        }),
-      toggleWatch: (id) =>
+          influencers: get().influencers.map((i) => (i.id === id ? { ...i, following: !i.following } : i)),
+        })
+        if (x) get().logEvent('community', `${x.following ? 'Unfollowed' : 'Followed'} @${x.handle}`)
+      },
+      toggleWatch: (id) => {
+        const x = get().influencers.find((i) => i.id === id)
         set({
-          influencers: get().influencers.map((x) => {
-            if (x.id !== id) return x
-            const hasWatch = x.flags.includes('watch')
-            return { ...x, flags: hasWatch ? x.flags.filter((f) => f !== 'watch') : [...x.flags, 'watch'] }
+          influencers: get().influencers.map((i) => {
+            if (i.id !== id) return i
+            const hasWatch = i.flags.includes('watch')
+            return { ...i, flags: hasWatch ? i.flags.filter((f) => f !== 'watch') : [...i.flags, 'watch'] }
           }),
-        }),
-      deleteInfluencer: (id) => set({ influencers: get().influencers.filter((x) => x.id !== id) }),
+        })
+        if (x) get().logEvent('community', `${x.flags.includes('watch') ? 'Unflagged' : 'Flagged'} @${x.handle}`)
+      },
+      deleteInfluencer: (id) => {
+        const x = get().influencers.find((i) => i.id === id)
+        set({ influencers: get().influencers.filter((i) => i.id !== id) })
+        if (x) get().logEvent('community', `Removed @${x.handle}`)
+      },
 
       activePanel: null,
       setActivePanel: (p) => set({ activePanel: p }),
+
+      log: [],
+      logEvent: (kind, text) => {
+        const entry: LogEntry = { id: uid(), at: Date.now(), kind, text }
+        set({ log: [entry, ...get().log].slice(0, LOG_CAP) })
+      },
+
+      hyperfixation: null,
+      hyperfixationItems: [],
+      hyperfixationHistory: [],
+      setHyperfixation: (topic) => {
+        const trimmed = topic.trim()
+        if (!trimmed) return
+        const cur = get().hyperfixation
+        if (cur && cur.topic.toLowerCase() !== trimmed.toLowerCase()) {
+          set({ hyperfixationHistory: [cur, ...get().hyperfixationHistory].slice(0, 30) })
+        }
+        const sameTopic = cur && cur.topic.toLowerCase() === trimmed.toLowerCase()
+        set({
+          hyperfixation: { topic: trimmed, startedAt: sameTopic ? cur.startedAt : Date.now() },
+          hyperfixationItems: sameTopic ? get().hyperfixationItems : [],
+        })
+        get().logEvent('hyperfixation', `Hyperfixation set: ${trimmed}`)
+      },
+      addHyperfixationItem: (text, url) => {
+        const item: HyperItem = { id: uid(), text, url, at: Date.now() }
+        set({ hyperfixationItems: [item, ...get().hyperfixationItems] })
+        get().logEvent('hyperfixation', `Saved note on ${get().hyperfixation?.topic ?? 'topic'}`)
+      },
+      deleteHyperfixationItem: (id) =>
+        set({ hyperfixationItems: get().hyperfixationItems.filter((i) => i.id !== id) }),
+      clearHyperfixation: () => {
+        const cur = get().hyperfixation
+        if (cur) set({ hyperfixationHistory: [cur, ...get().hyperfixationHistory].slice(0, 30) })
+        set({ hyperfixation: null, hyperfixationItems: [] })
+        get().logEvent('hyperfixation', `Hyperfixation cleared`)
+      },
 
       scrollEnabled: false,
       scrollThresholdMin: 10,
@@ -227,12 +344,14 @@ export const useAppStore = create<AppStore>()(
       setScrollCoolDownMin: (v) => set({ scrollCoolDownMin: v }),
       addScrollTime: (deltaMs) => set({ scrollTimeMs: get().scrollTimeMs + deltaMs }),
       resetScrollTime: () => set({ scrollTimeMs: 0 }),
-      registerIntervention: (accepted) =>
+      registerIntervention: (accepted) => {
         set({
           lastInterventionAt: Date.now(),
           interventionsToday: get().interventionsToday + 1,
           interventionsAccepted: get().interventionsAccepted + (accepted ? 1 : 0),
-        }),
+        })
+        get().logEvent('scroll', accepted ? 'Scroll break accepted' : 'Scroll break dismissed')
+      },
 
       characterState: 'idle',
       characterSpeech: null,
@@ -250,11 +369,22 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'saw-state',
-      version: 1,
-      // v0 layouts put tiles in rows 0–1 where the full-width character banner now sits.
-      // Reset tiles to the current default so nothing overlaps the person.
-      migrate: (persisted) =>
-        ({ ...(persisted as Record<string, unknown>), tiles: defaultLayout }) as any,
+      version: 2,
+      migrate: (persisted, version) => {
+        const p = persisted as { tiles?: TileConfig[] } | undefined
+        if (!p || (version as number) < 1) {
+          // v0: stale positions overlap the full-width character → full reset
+          return { ...(p ?? {}), tiles: defaultLayout } as any
+        }
+        if ((version as number) < 2) {
+          // v1: add newly-introduced tiles without clobbering the user's layout
+          const saved = p.tiles ?? []
+          const have = new Set(saved.map((t) => t.type))
+          const missing = defaultLayout.filter((t) => !have.has(t.type))
+          return { ...p, tiles: [...saved, ...missing] } as any
+        }
+        return persisted as any
+      },
       partialize: (s) => ({
         onboardingComplete: s.onboardingComplete,
         tiles: s.tiles,
@@ -262,6 +392,10 @@ export const useAppStore = create<AppStore>()(
         medications: s.medications,
         goals: s.goals,
         influencers: s.influencers,
+        log: s.log,
+        hyperfixation: s.hyperfixation,
+        hyperfixationItems: s.hyperfixationItems,
+        hyperfixationHistory: s.hyperfixationHistory,
         scrollEnabled: s.scrollEnabled,
         scrollThresholdMin: s.scrollThresholdMin,
         scrollCoolDownMin: s.scrollCoolDownMin,

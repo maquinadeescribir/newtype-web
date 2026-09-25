@@ -29,8 +29,10 @@ export const defaultLayout: TileConfig[] = [
   { type: 'trending', size: '1x1', position: { row: 5, col: 3 }, visible: true },
   { type: 'following', size: '1x1', position: { row: 5, col: 4 }, visible: true },
   { type: 'watchout', size: '1x1', position: { row: 5, col: 5 }, visible: true },
-  // Row 6
+  // Row 6 — wellbeing + activity + hyperfixation
   { type: 'focus', size: '1x1', position: { row: 6, col: 0 }, visible: true },
   { type: 'nextevent', size: '1x1', position: { row: 6, col: 1 }, visible: true },
   { type: 'weather', size: '1x1', position: { row: 6, col: 2 }, visible: true },
+  { type: 'hyperfixation', size: '1x1', position: { row: 6, col: 3 }, visible: true },
+  { type: 'activity', size: '2x1', position: { row: 6, col: 4 }, visible: true },
 ]

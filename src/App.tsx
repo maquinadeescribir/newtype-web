@@ -6,6 +6,8 @@ import Onboarding from './components/onboarding/Onboarding'
 import TileConfigPanel from './components/config/TileConfigPanel'
 import CommunityPanel from './components/CommunityPanel'
 import { NewsPanel } from './components/tiles/NewsTile'
+import ActivityPanel from './components/ActivityPanel'
+import HyperfixationPanel from './components/HyperfixationPanel'
 import { useScrollIntervention } from './hooks/useScrollIntervention'
 import type { CommunityVariant } from './types'
 
@@ -73,6 +75,8 @@ export default function App() {
         <CommunityPanel initialTab={activePanel.split(':')[1] as CommunityVariant} />
       )}
       {activePanel === 'news' && <NewsPanel />}
+      {activePanel === 'activity' && <ActivityPanel />}
+      {activePanel === 'hyperfixation' && <HyperfixationPanel />}
     </div>
   )
 }

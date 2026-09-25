@@ -11,6 +11,8 @@ import ContextResumeTile from '../tiles/ContextResumeTile'
 import AhhButtonTile from '../tiles/AhhButtonTile'
 import CommunityTile from '../tiles/CommunityTile'
 import NewsTile from '../tiles/NewsTile'
+import ActivityTile from '../tiles/ActivityTile'
+import HyperfixationTile from '../tiles/HyperfixationTile'
 import MockupTile from '../tiles/MockupTile'
 
 const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
@@ -25,6 +27,8 @@ const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
   following: () => <CommunityTile variant="following" />,
   watchout: () => <CommunityTile variant="watchout" />,
   news: NewsTile,
+  activity: ActivityTile,
+  hyperfixation: HyperfixationTile,
 }
 
 const COLS = 6

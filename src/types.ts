@@ -24,6 +24,8 @@ export type TileType =
   | 'following'
   | 'watchout'
   | 'news'
+  | 'activity'
+  | 'hyperfixation'
 
 export interface TileConfig {
   type: TileType
@@ -56,6 +58,35 @@ export interface CommunityPost {
 }
 
 export type CommunityVariant = 'directory' | 'trending' | 'following' | 'watchout'
+
+export type LogKind =
+  | 'app'
+  | 'timer'
+  | 'reminder'
+  | 'goal'
+  | 'scroll'
+  | 'community'
+  | 'hyperfixation'
+  | 'character'
+
+export interface LogEntry {
+  id: string
+  at: number
+  kind: LogKind
+  text: string
+}
+
+export interface HyperItem {
+  id: string
+  text: string
+  url?: string
+  at: number
+}
+
+export interface Hyperfixation {
+  topic: string
+  startedAt: number
+}
 
 export type TimerType = 'countdown' | 'stopwatch'
 export type TimerStatus = 'running' | 'paused' | 'expired'
@@ -131,6 +162,8 @@ export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize;
   following: { label: 'Following', defaultSize: '1x1', icon: '👥' },
   watchout: { label: 'Watch out', defaultSize: '1x1', icon: '🚩' },
   news: { label: 'News', defaultSize: '2x1', icon: '📰' },
+  activity: { label: 'Activity', defaultSize: '2x1', icon: '📈' },
+  hyperfixation: { label: 'Hyperfixation', defaultSize: '1x1', icon: '🧠' },
 }
 
 export const ALL_TILE_TYPES = Object.keys(TILE_META) as TileType[]
