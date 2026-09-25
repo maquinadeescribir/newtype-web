@@ -12,13 +12,17 @@ import type {
   HyperItem,
   Hyperfixation,
   Resource,
+  GoodThing,
+  GoodDeed,
+  Fidget,
 } from '../types'
 import { TILE_META } from '../types'
 import { TIMER_COLORS } from '../constants/theme'
 import { defaultLayout } from '../constants/defaultLayout'
 import { SEED_INFLUENCERS } from '../data/community'
 import { SEED_RESOURCES } from '../data/resources'
-import { uid, tileRows } from '../lib/util'
+import { SEED_GOOD_DEEDS } from '../data/goodDeeds'
+import { uid, tileRows, todayKey } from '../lib/util'
 
 let timerColorIndex = 0
 
@@ -80,6 +84,26 @@ interface AppStore {
   addResource: (r: Omit<Resource, 'id' | 'hidden'>) => void
   toggleResourceHidden: (id: string) => void
   deleteResource: (id: string) => void
+
+  goodThings: GoodThing[]
+  addGoodThing: (text: string) => void
+  deleteGoodThing: (id: string) => void
+
+  waterLog: Record<string, number>
+  addWater: () => void
+  removeWater: () => void
+
+  stimFavs: string[]
+  addStimFav: (entry: string) => void
+  removeStimFav: (entry: string) => void
+  fidgets: Fidget[]
+  addFidget: (name: string, location: string) => void
+  deleteFidget: (id: string) => void
+
+  goodDeeds: GoodDeed[]
+  addGoodDeed: (text: string) => void
+  toggleGoodDeed: (id: string) => void
+  deleteGoodDeed: (id: string) => void
 
   scrollEnabled: boolean
   scrollThresholdMin: number
@@ -355,6 +379,61 @@ export const useAppStore = create<AppStore>()(
         if (r) get().logEvent('app', `Resource removed: ${r.name}`)
       },
 
+      goodThings: [],
+      addGoodThing: (text) => {
+        const t = text.trim()
+        if (!t) return
+        set({ goodThings: [{ id: uid(), text: t, at: Date.now() }, ...get().goodThings] })
+        get().logEvent('app', `Good thing: ${t}`)
+      },
+      deleteGoodThing: (id) => set({ goodThings: get().goodThings.filter((g) => g.id !== id) }),
+
+      waterLog: {},
+      addWater: () => {
+        const k = todayKey()
+        set({ waterLog: { ...get().waterLog, [k]: (get().waterLog[k] ?? 0) + 1 } })
+      },
+      removeWater: () => {
+        const k = todayKey()
+        const n = get().waterLog[k] ?? 0
+        if (n <= 0) return
+        set({ waterLog: { ...get().waterLog, [k]: n - 1 } })
+      },
+
+      stimFavs: [],
+      addStimFav: (entry) => {
+        const e = entry.trim()
+        if (!e) return
+        set({ stimFavs: [...get().stimFavs, e] })
+        get().logEvent('app', `Stim fav added: ${e}`)
+      },
+      removeStimFav: (entry) => set({ stimFavs: get().stimFavs.filter((x) => x !== entry) }),
+      fidgets: [],
+      addFidget: (name, location) => {
+        const n = name.trim()
+        if (!n) return
+        set({ fidgets: [...get().fidgets, { id: uid(), name: n, location: location.trim() }] })
+      },
+      deleteFidget: (id) => set({ fidgets: get().fidgets.filter((f) => f.id !== id) }),
+
+      goodDeeds: SEED_GOOD_DEEDS,
+      addGoodDeed: (text) => {
+        const t = text.trim()
+        if (!t) return
+        set({ goodDeeds: [{ id: uid(), text: t, done: false, doneAt: null }, ...get().goodDeeds] })
+      },
+      toggleGoodDeed: (id) => {
+        const d = get().goodDeeds.find((x) => x.id === id)
+        if (!d) return
+        set({
+          goodDeeds: get().goodDeeds.map((x) =>
+            x.id === id ? { ...x, done: !x.done, doneAt: !x.done ? Date.now() : null } : x,
+          ),
+        })
+        if (!d.done) get().logEvent('app', `Good deed done: ${d.text}`)
+      },
+      deleteGoodDeed: (id) => set({ goodDeeds: get().goodDeeds.filter((d) => d.id !== id) }),
+
       scrollEnabled: false,
       scrollThresholdMin: 10,
       scrollCoolDownMin: 5,
@@ -392,15 +471,15 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'saw-state',
-      version: 3,
+      version: 4,
       migrate: (persisted, version) => {
         const p = persisted as { tiles?: TileConfig[] } | undefined
         if (!p || (version as number) < 1) {
           // v0: stale positions overlap the full-width character → full reset
           return { ...(p ?? {}), tiles: defaultLayout } as any
         }
-        if ((version as number) < 3) {
-          // v1/v2: add newly-introduced tiles without clobbering the user's layout
+        if ((version as number) < 4) {
+          // v1–v3: add newly-introduced tiles without clobbering the user's layout
           const saved = p.tiles ?? []
           const have = new Set(saved.map((t) => t.type))
           const missing = defaultLayout.filter((t) => !have.has(t.type))
@@ -420,6 +499,11 @@ export const useAppStore = create<AppStore>()(
         hyperfixationItems: s.hyperfixationItems,
         hyperfixationHistory: s.hyperfixationHistory,
         resources: s.resources,
+        goodThings: s.goodThings,
+        waterLog: s.waterLog,
+        stimFavs: s.stimFavs,
+        fidgets: s.fidgets,
+        goodDeeds: s.goodDeeds,
         scrollEnabled: s.scrollEnabled,
         scrollThresholdMin: s.scrollThresholdMin,
         scrollCoolDownMin: s.scrollCoolDownMin,

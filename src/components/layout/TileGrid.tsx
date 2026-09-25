@@ -14,6 +14,11 @@ import NewsTile from '../tiles/NewsTile'
 import ActivityTile from '../tiles/ActivityTile'
 import HyperfixationTile from '../tiles/HyperfixationTile'
 import ResourcesTile from '../tiles/ResourcesTile'
+import GoodThingsTile from '../tiles/GoodThingsTile'
+import DaySummaryTile from '../tiles/DaySummaryTile'
+import WaterTile from '../tiles/WaterTile'
+import StimTile from '../tiles/StimTile'
+import GoodDeedsTile from '../tiles/GoodDeedsTile'
 import MockupTile from '../tiles/MockupTile'
 
 const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
@@ -31,6 +36,11 @@ const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
   activity: ActivityTile,
   hyperfixation: HyperfixationTile,
   resources: ResourcesTile,
+  goodthings: GoodThingsTile,
+  daysummary: DaySummaryTile,
+  water: WaterTile,
+  stim: StimTile,
+  gooddeeds: GoodDeedsTile,
 }
 
 const COLS = 6

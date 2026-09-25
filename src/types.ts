@@ -27,6 +27,11 @@ export type TileType =
   | 'activity'
   | 'hyperfixation'
   | 'resources'
+  | 'stim'
+  | 'gooddeeds'
+  | 'goodthings'
+  | 'daysummary'
+  | 'water'
 
 export interface TileConfig {
   type: TileType
@@ -96,6 +101,25 @@ export interface Resource {
   category: string
   description: string
   hidden: boolean
+}
+
+export interface GoodThing {
+  id: string
+  text: string
+  at: number
+}
+
+export interface GoodDeed {
+  id: string
+  text: string
+  done: boolean
+  doneAt: number | null
+}
+
+export interface Fidget {
+  id: string
+  name: string
+  location: string
 }
 
 export type TimerType = 'countdown' | 'stopwatch'
@@ -175,6 +199,11 @@ export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize;
   activity: { label: 'Activity', defaultSize: '2x1', icon: '📈' },
   hyperfixation: { label: 'Hyperfixation', defaultSize: '1x1', icon: '🧠' },
   resources: { label: 'Resources', defaultSize: '1x1', icon: '🧰' },
+  stim: { label: 'Stim Menu', defaultSize: '1x1', icon: '🌀' },
+  gooddeeds: { label: 'Do Good', defaultSize: '1x1', icon: '🌍' },
+  goodthings: { label: 'Good Things', defaultSize: '1x1', icon: '🌟' },
+  daysummary: { label: 'Day Recap', defaultSize: '1x1', icon: '✨' },
+  water: { label: 'Water', defaultSize: '1x1', icon: '💧' },
 }
 
 export const ALL_TILE_TYPES = Object.keys(TILE_META) as TileType[]

@@ -35,6 +35,11 @@ export const defaultLayout: TileConfig[] = [
   { type: 'weather', size: '1x1', position: { row: 6, col: 2 }, visible: true },
   { type: 'hyperfixation', size: '1x1', position: { row: 6, col: 3 }, visible: true },
   { type: 'activity', size: '2x1', position: { row: 6, col: 4 }, visible: true },
-  // Row 7
+  // Row 7 — resources + daily habits
   { type: 'resources', size: '1x1', position: { row: 7, col: 0 }, visible: true },
+  { type: 'goodthings', size: '1x1', position: { row: 7, col: 1 }, visible: true },
+  { type: 'daysummary', size: '1x1', position: { row: 7, col: 2 }, visible: true },
+  { type: 'water', size: '1x1', position: { row: 7, col: 3 }, visible: true },
+  { type: 'stim', size: '1x1', position: { row: 7, col: 4 }, visible: true },
+  { type: 'gooddeeds', size: '1x1', position: { row: 7, col: 5 }, visible: true },
 ]

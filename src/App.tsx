@@ -9,6 +9,10 @@ import { NewsPanel } from './components/tiles/NewsTile'
 import ActivityPanel from './components/ActivityPanel'
 import HyperfixationPanel from './components/HyperfixationPanel'
 import ResourcesPanel from './components/ResourcesPanel'
+import GoodThingsPanel from './components/GoodThingsPanel'
+import DaySummaryPanel from './components/DaySummaryPanel'
+import StimPanel from './components/StimPanel'
+import GoodDeedsPanel from './components/GoodDeedsPanel'
 import { useScrollIntervention } from './hooks/useScrollIntervention'
 import type { CommunityVariant } from './types'
 
@@ -79,6 +83,10 @@ export default function App() {
       {activePanel === 'activity' && <ActivityPanel />}
       {activePanel === 'hyperfixation' && <HyperfixationPanel />}
       {activePanel === 'resources' && <ResourcesPanel />}
+      {activePanel === 'goodthings' && <GoodThingsPanel />}
+      {activePanel === 'daysummary' && <DaySummaryPanel />}
+      {activePanel === 'stim' && <StimPanel />}
+      {activePanel === 'gooddeeds' && <GoodDeedsPanel />}
     </div>
   )
 }

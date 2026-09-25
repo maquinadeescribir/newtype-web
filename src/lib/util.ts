@@ -13,6 +13,16 @@ export function tileRows(size: TileSize): number {
   return size[2] === '1' ? 1 : 2 // third char = height → rows
 }
 
+export function todayKey(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+export function startOfToday(): number {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
 // countdown-style mm:ss (or h:mm:ss)
 export function formatMs(ms: number): string {
   if (ms < 0) ms = 0
