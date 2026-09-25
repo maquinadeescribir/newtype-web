@@ -19,6 +19,11 @@ export type TileType =
   | 'focus'
   | 'nextevent'
   | 'weather'
+  | 'directory'
+  | 'trending'
+  | 'following'
+  | 'watchout'
+  | 'news'
 
 export interface TileConfig {
   type: TileType
@@ -26,6 +31,31 @@ export interface TileConfig {
   position: { row: number; col: number }
   visible: boolean
 }
+
+export type Platform = 'instagram' | 'facebook' | 'tiktok' | 'youtube' | 'web' | 'other'
+
+export interface Influencer {
+  id: string
+  handle: string
+  name: string
+  platform: Platform
+  focus: string
+  monetisation?: string
+  watchReason?: string
+  flags: string[]
+  following: boolean
+}
+
+export interface CommunityPost {
+  ownerHandle: string
+  ownerName: string
+  caption: string
+  url?: string
+  savedAt: number
+  source: 'instagram' | 'facebook'
+}
+
+export type CommunityVariant = 'directory' | 'trending' | 'following' | 'watchout'
 
 export type TimerType = 'countdown' | 'stopwatch'
 export type TimerStatus = 'running' | 'paused' | 'expired'
@@ -96,6 +126,11 @@ export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize;
   focus: { label: 'Focus Mode', defaultSize: '1x1', icon: '🔕' },
   nextevent: { label: 'Next Event', defaultSize: '1x1', icon: '📅' },
   weather: { label: 'Weather', defaultSize: '1x1', icon: '🌤️' },
+  directory: { label: 'Directory', defaultSize: '1x1', icon: '📚' },
+  trending: { label: 'Trending', defaultSize: '1x1', icon: '🔥' },
+  following: { label: 'Following', defaultSize: '1x1', icon: '👥' },
+  watchout: { label: 'Watch out', defaultSize: '1x1', icon: '🚩' },
+  news: { label: 'News', defaultSize: '2x1', icon: '📰' },
 }
 
 export const ALL_TILE_TYPES = Object.keys(TILE_META) as TileType[]

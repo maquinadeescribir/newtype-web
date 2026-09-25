@@ -9,6 +9,8 @@ import ScrollInterventionTile from '../tiles/ScrollInterventionTile'
 import GoalsTile from '../tiles/GoalsTile'
 import ContextResumeTile from '../tiles/ContextResumeTile'
 import AhhButtonTile from '../tiles/AhhButtonTile'
+import CommunityTile from '../tiles/CommunityTile'
+import NewsTile from '../tiles/NewsTile'
 import MockupTile from '../tiles/MockupTile'
 
 const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
@@ -18,6 +20,11 @@ const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
   goals: GoalsTile,
   context: ContextResumeTile,
   ahh: AhhButtonTile,
+  directory: () => <CommunityTile variant="directory" />,
+  trending: () => <CommunityTile variant="trending" />,
+  following: () => <CommunityTile variant="following" />,
+  watchout: () => <CommunityTile variant="watchout" />,
+  news: NewsTile,
 }
 
 const COLS = 6

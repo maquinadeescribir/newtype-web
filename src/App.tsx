@@ -4,13 +4,17 @@ import TileGrid from './components/layout/TileGrid'
 import ScrollOverlay from './components/ScrollOverlay'
 import Onboarding from './components/onboarding/Onboarding'
 import TileConfigPanel from './components/config/TileConfigPanel'
+import CommunityPanel from './components/CommunityPanel'
+import { NewsPanel } from './components/tiles/NewsTile'
 import { useScrollIntervention } from './hooks/useScrollIntervention'
+import type { CommunityVariant } from './types'
 
 export default function App() {
   const onboardingComplete = useAppStore((s) => s.onboardingComplete)
   const lastActivity = useAppStore((s) => s.lastActivity)
   const speak = useAppStore((s) => s.speak)
   const setLastActivity = useAppStore((s) => s.setLastActivity)
+  const activePanel = useAppStore((s) => s.activePanel)
   const [configOpen, setConfigOpen] = useState(false)
 
   useScrollIntervention()
@@ -65,6 +69,10 @@ export default function App() {
 
       <ScrollOverlay />
       <TileConfigPanel open={configOpen} onClose={() => setConfigOpen(false)} />
+      {activePanel?.startsWith('community') && (
+        <CommunityPanel initialTab={activePanel.split(':')[1] as CommunityVariant} />
+      )}
+      {activePanel === 'news' && <NewsPanel />}
     </div>
   )
 }

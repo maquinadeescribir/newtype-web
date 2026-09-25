@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { TileConfig, Timer, Medication, Goal, CharacterState } from '../types'
+import type { TileConfig, Timer, Medication, Goal, CharacterState, Influencer } from '../types'
 import { TILE_META } from '../types'
 import { TIMER_COLORS } from '../constants/theme'
 import { defaultLayout } from '../constants/defaultLayout'
+import { SEED_INFLUENCERS } from '../data/community'
 import { uid, tileRows } from '../lib/util'
 
 let timerColorIndex = 0
@@ -39,6 +40,15 @@ interface AppStore {
   addGoal: (g: Omit<Goal, 'id' | 'createdAt'>) => void
   updateGoal: (id: string, patch: Partial<Goal>) => void
   deleteGoal: (id: string) => void
+
+  influencers: Influencer[]
+  addInfluencer: (i: Omit<Influencer, 'id' | 'following'>) => void
+  toggleFollow: (id: string) => void
+  toggleWatch: (id: string) => void
+  deleteInfluencer: (id: string) => void
+
+  activePanel: string | null
+  setActivePanel: (p: string | null) => void
 
   scrollEnabled: boolean
   scrollThresholdMin: number
@@ -185,6 +195,26 @@ export const useAppStore = create<AppStore>()(
         set({ goals: get().goals.map((g) => (g.id === id ? { ...g, ...patch } : g)) }),
       deleteGoal: (id) => set({ goals: get().goals.filter((g) => g.id !== id) }),
 
+      influencers: SEED_INFLUENCERS,
+      addInfluencer: (i) =>
+        set({ influencers: [{ ...i, id: uid(), following: false }, ...get().influencers] }),
+      toggleFollow: (id) =>
+        set({
+          influencers: get().influencers.map((x) => (x.id === id ? { ...x, following: !x.following } : x)),
+        }),
+      toggleWatch: (id) =>
+        set({
+          influencers: get().influencers.map((x) => {
+            if (x.id !== id) return x
+            const hasWatch = x.flags.includes('watch')
+            return { ...x, flags: hasWatch ? x.flags.filter((f) => f !== 'watch') : [...x.flags, 'watch'] }
+          }),
+        }),
+      deleteInfluencer: (id) => set({ influencers: get().influencers.filter((x) => x.id !== id) }),
+
+      activePanel: null,
+      setActivePanel: (p) => set({ activePanel: p }),
+
       scrollEnabled: false,
       scrollThresholdMin: 10,
       scrollCoolDownMin: 5,
@@ -226,6 +256,7 @@ export const useAppStore = create<AppStore>()(
         timers: s.timers,
         medications: s.medications,
         goals: s.goals,
+        influencers: s.influencers,
         scrollEnabled: s.scrollEnabled,
         scrollThresholdMin: s.scrollThresholdMin,
         scrollCoolDownMin: s.scrollCoolDownMin,

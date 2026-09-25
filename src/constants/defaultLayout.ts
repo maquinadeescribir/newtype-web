@@ -26,4 +26,10 @@ export const defaultLayout: TileConfig[] = [
   // Row 4
   { type: 'nextevent', size: '1x1', position: { row: 4, col: 0 }, visible: true },
   { type: 'weather', size: '1x1', position: { row: 4, col: 1 }, visible: true },
+  // Row 5 — community + news
+  { type: 'news', size: '2x1', position: { row: 5, col: 0 }, visible: true },
+  { type: 'directory', size: '1x1', position: { row: 5, col: 2 }, visible: true },
+  { type: 'trending', size: '1x1', position: { row: 5, col: 3 }, visible: true },
+  { type: 'following', size: '1x1', position: { row: 5, col: 4 }, visible: true },
+  { type: 'watchout', size: '1x1', position: { row: 5, col: 5 }, visible: true },
 ]
