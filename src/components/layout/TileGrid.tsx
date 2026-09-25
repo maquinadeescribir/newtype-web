@@ -19,6 +19,10 @@ import DaySummaryTile from '../tiles/DaySummaryTile'
 import WaterTile from '../tiles/WaterTile'
 import StimTile from '../tiles/StimTile'
 import GoodDeedsTile from '../tiles/GoodDeedsTile'
+import BodyScanTile from '../tiles/BodyScanTile'
+import CoffeeTile from '../tiles/CoffeeTile'
+import FoodTile from '../tiles/FoodTile'
+import WeightTile from '../tiles/WeightTile'
 import MockupTile from '../tiles/MockupTile'
 
 const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
@@ -41,6 +45,10 @@ const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
   water: WaterTile,
   stim: StimTile,
   gooddeeds: GoodDeedsTile,
+  bodyscan: BodyScanTile,
+  coffee: CoffeeTile,
+  food: FoodTile,
+  weight: WeightTile,
 }
 
 const COLS = 6

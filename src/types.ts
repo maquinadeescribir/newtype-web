@@ -32,6 +32,10 @@ export type TileType =
   | 'goodthings'
   | 'daysummary'
   | 'water'
+  | 'bodyscan'
+  | 'coffee'
+  | 'food'
+  | 'weight'
 
 export interface TileConfig {
   type: TileType
@@ -122,6 +126,30 @@ export interface Fidget {
   location: string
 }
 
+export interface BodyEntry {
+  id: string
+  part: string
+  partLabel: string
+  feeling: string
+  color: string
+  category: string
+  at: number
+}
+
+export interface FoodEntry {
+  id: string
+  text: string
+  meal: string
+  at: number
+}
+
+export interface WeightEntry {
+  id: string
+  value: number
+  unit: 'lb' | 'kg'
+  at: number
+}
+
 export type TimerType = 'countdown' | 'stopwatch'
 export type TimerStatus = 'running' | 'paused' | 'expired'
 
@@ -204,6 +232,10 @@ export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize;
   goodthings: { label: 'Good Things', defaultSize: '1x1', icon: '🌟' },
   daysummary: { label: 'Day Recap', defaultSize: '1x1', icon: '✨' },
   water: { label: 'Water', defaultSize: '1x1', icon: '💧' },
+  bodyscan: { label: 'Body Scan', defaultSize: '2x1', icon: '🧍' },
+  coffee: { label: 'Coffee', defaultSize: '1x1', icon: '☕' },
+  food: { label: 'Food', defaultSize: '1x1', icon: '🍽️' },
+  weight: { label: 'Weight', defaultSize: '2x1', icon: '⚖️' },
 }
 
 export const ALL_TILE_TYPES = Object.keys(TILE_META) as TileType[]

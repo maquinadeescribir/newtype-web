@@ -15,6 +15,9 @@ import type {
   GoodThing,
   GoodDeed,
   Fidget,
+  BodyEntry,
+  FoodEntry,
+  WeightEntry,
 } from '../types'
 import { TILE_META } from '../types'
 import { TIMER_COLORS } from '../constants/theme'
@@ -104,6 +107,22 @@ interface AppStore {
   addGoodDeed: (text: string) => void
   toggleGoodDeed: (id: string) => void
   deleteGoodDeed: (id: string) => void
+
+  bodyEntries: BodyEntry[]
+  addBodyEntry: (e: Omit<BodyEntry, 'id' | 'at'>) => void
+  deleteBodyEntry: (id: string) => void
+
+  coffeeLog: Record<string, number>
+  addCoffee: () => void
+  removeCoffee: () => void
+
+  foodEntries: FoodEntry[]
+  addFood: (text: string, meal: string) => void
+  deleteFood: (id: string) => void
+
+  weightEntries: WeightEntry[]
+  addWeight: (value: number, unit: WeightEntry['unit']) => void
+  deleteWeight: (id: string) => void
 
   scrollEnabled: boolean
   scrollThresholdMin: number
@@ -434,6 +453,42 @@ export const useAppStore = create<AppStore>()(
       },
       deleteGoodDeed: (id) => set({ goodDeeds: get().goodDeeds.filter((d) => d.id !== id) }),
 
+      bodyEntries: [],
+      addBodyEntry: (e) => {
+        set({ bodyEntries: [{ ...e, id: uid(), at: Date.now() }, ...get().bodyEntries] })
+        get().logEvent('app', `Body scan: ${e.feeling} · ${e.partLabel}`)
+      },
+      deleteBodyEntry: (id) => set({ bodyEntries: get().bodyEntries.filter((b) => b.id !== id) }),
+
+      coffeeLog: {},
+      addCoffee: () => {
+        const k = todayKey()
+        set({ coffeeLog: { ...get().coffeeLog, [k]: (get().coffeeLog[k] ?? 0) + 1 } })
+      },
+      removeCoffee: () => {
+        const k = todayKey()
+        const n = get().coffeeLog[k] ?? 0
+        if (n <= 0) return
+        set({ coffeeLog: { ...get().coffeeLog, [k]: n - 1 } })
+      },
+
+      foodEntries: [],
+      addFood: (text, meal) => {
+        const t = text.trim()
+        if (!t) return
+        set({ foodEntries: [{ id: uid(), text: t, meal, at: Date.now() }, ...get().foodEntries] })
+        get().logEvent('app', `Food logged: ${t}`)
+      },
+      deleteFood: (id) => set({ foodEntries: get().foodEntries.filter((f) => f.id !== id) }),
+
+      weightEntries: [],
+      addWeight: (value, unit) => {
+        if (!value || value <= 0) return
+        set({ weightEntries: [{ id: uid(), value, unit, at: Date.now() }, ...get().weightEntries] })
+        get().logEvent('app', `Weight logged: ${value} ${unit}`)
+      },
+      deleteWeight: (id) => set({ weightEntries: get().weightEntries.filter((w) => w.id !== id) }),
+
       scrollEnabled: false,
       scrollThresholdMin: 10,
       scrollCoolDownMin: 5,
@@ -471,15 +526,15 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'saw-state',
-      version: 4,
+      version: 5,
       migrate: (persisted, version) => {
         const p = persisted as { tiles?: TileConfig[] } | undefined
         if (!p || (version as number) < 1) {
           // v0: stale positions overlap the full-width character → full reset
           return { ...(p ?? {}), tiles: defaultLayout } as any
         }
-        if ((version as number) < 4) {
-          // v1–v3: add newly-introduced tiles without clobbering the user's layout
+        if ((version as number) < 5) {
+          // v1–v4: add newly-introduced tiles without clobbering the user's layout
           const saved = p.tiles ?? []
           const have = new Set(saved.map((t) => t.type))
           const missing = defaultLayout.filter((t) => !have.has(t.type))
@@ -504,6 +559,10 @@ export const useAppStore = create<AppStore>()(
         stimFavs: s.stimFavs,
         fidgets: s.fidgets,
         goodDeeds: s.goodDeeds,
+        bodyEntries: s.bodyEntries,
+        coffeeLog: s.coffeeLog,
+        foodEntries: s.foodEntries,
+        weightEntries: s.weightEntries,
         scrollEnabled: s.scrollEnabled,
         scrollThresholdMin: s.scrollThresholdMin,
         scrollCoolDownMin: s.scrollCoolDownMin,

@@ -13,6 +13,9 @@ import GoodThingsPanel from './components/GoodThingsPanel'
 import DaySummaryPanel from './components/DaySummaryPanel'
 import StimPanel from './components/StimPanel'
 import GoodDeedsPanel from './components/GoodDeedsPanel'
+import BodyScanPanel from './components/BodyScanPanel'
+import FoodPanel from './components/FoodPanel'
+import WeightPanel from './components/WeightPanel'
 import { useScrollIntervention } from './hooks/useScrollIntervention'
 import type { CommunityVariant } from './types'
 
@@ -87,6 +90,9 @@ export default function App() {
       {activePanel === 'daysummary' && <DaySummaryPanel />}
       {activePanel === 'stim' && <StimPanel />}
       {activePanel === 'gooddeeds' && <GoodDeedsPanel />}
+      {activePanel === 'bodyscan' && <BodyScanPanel />}
+      {activePanel === 'food' && <FoodPanel />}
+      {activePanel === 'weight' && <WeightPanel />}
     </div>
   )
 }

@@ -42,4 +42,9 @@ export const defaultLayout: TileConfig[] = [
   { type: 'water', size: '1x1', position: { row: 7, col: 3 }, visible: true },
   { type: 'stim', size: '1x1', position: { row: 7, col: 4 }, visible: true },
   { type: 'gooddeeds', size: '1x1', position: { row: 7, col: 5 }, visible: true },
+  // Row 8 — body + intake
+  { type: 'bodyscan', size: '2x1', position: { row: 8, col: 0 }, visible: true },
+  { type: 'weight', size: '2x1', position: { row: 8, col: 2 }, visible: true },
+  { type: 'coffee', size: '1x1', position: { row: 8, col: 4 }, visible: true },
+  { type: 'food', size: '1x1', position: { row: 8, col: 5 }, visible: true },
 ]
