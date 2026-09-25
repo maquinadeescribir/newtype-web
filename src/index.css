@@ -422,46 +422,26 @@ select {
   background: var(--surface-raised);
 }
 
-/* ---------- Routine tracker (stealth — no labels/icons) ---------- */
+/* ---------- Reminder tiles (stealth — one tile per reminder, no labels/icons) ---------- */
 .med-tile-body {
-  gap: 6px;
-  cursor: default;
-}
-
-.med-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-}
-
-.med-row {
-  display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 3px 4px;
+  justify-content: center;
+  gap: 6px;
   cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.12s ease;
 }
 
-.med-row:hover {
-  background: var(--surface-raised);
-}
-
-.med-dot {
-  width: 9px;
-  height: 9px;
+.med-dot-lg {
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
 }
 
 .med-name {
-  flex: 1;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text);
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -469,21 +449,7 @@ select {
 
 .med-check {
   color: var(--green);
-  font-size: 12px;
-}
-
-.med-empty {
-  font-size: 12.5px;
-  color: var(--text-dim);
-  text-align: center;
-  padding: 4px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  gap: 4px;
+  font-size: 13px;
 }
 
 /* ---------- Scroll tile ---------- */

@@ -14,16 +14,21 @@ import MockupTile from '../tiles/MockupTile'
 const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
   character: CharacterTile,
   timer: TimerStackTile,
-  med: MedTrackerTile,
   scroll: ScrollInterventionTile,
   goals: GoalsTile,
   context: ContextResumeTile,
   ahh: AhhButtonTile,
 }
 
+const COLS = 6
+
 export default function TileGrid() {
   const tiles = useAppStore((s) => s.tiles)
+  const medications = useAppStore((s) => s.medications)
   const visible = tiles.filter((t) => t.visible)
+
+  // Reminder tiles flow in below the configured tiles, one per medication
+  const maxRow = visible.reduce((m, t) => Math.max(m, t.position.row + tileRows(t.size)), 0)
 
   return (
     <div className="grid">
@@ -37,13 +42,25 @@ export default function TileGrid() {
         }
         return (
           <div key={tile.type} className={`tile tile-${tile.type}${isMock ? ' tile-mock' : ''}`} style={style}>
-            {tile.type !== 'character' && tile.type !== 'med' && (
+            {tile.type !== 'character' && (
               <div className="tile-header">
                 <span className="icon">{meta.icon}</span>
                 <span>{meta.label}</span>
               </div>
             )}
             {Built ? <Built /> : <MockupTile type={tile.type} />}
+          </div>
+        )
+      })}
+
+      {medications.map((med, i) => {
+        const style: CSSProperties = {
+          gridColumn: `${(i % COLS) + 1} / span 1`,
+          gridRow: `${maxRow + Math.floor(i / COLS) + 1} / span 1`,
+        }
+        return (
+          <div key={`med-${med.id}`} className="tile tile-med" style={style}>
+            <MedTrackerTile medId={med.id} />
           </div>
         )
       })}

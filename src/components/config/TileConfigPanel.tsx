@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useAppStore } from '../../store/useAppStore'
-import { TILE_META, ALL_TILE_TYPES, type TileSize } from '../../types'
+import { TILE_META, ALL_TILE_TYPES, type TileSize, type Medication } from '../../types'
 
 const SIZES: TileSize[] = ['1x1', '2x1', '1x2', '2x2']
 
@@ -16,6 +17,10 @@ export default function TileConfigPanel({ open, onClose }: { open: boolean; onCl
   const scrollCoolDownMin = useAppStore((s) => s.scrollCoolDownMin)
   const setScrollCoolDownMin = useAppStore((s) => s.setScrollCoolDownMin)
   const resetOnboarding = useAppStore((s) => s.resetOnboarding)
+  const medications = useAppStore((s) => s.medications)
+  const deleteMedication = useAppStore((s) => s.deleteMedication)
+
+  const [reminder, setReminder] = useState<Medication | 'new' | null>(null)
 
   if (!open) return null
 
@@ -70,6 +75,31 @@ export default function TileConfigPanel({ open, onClose }: { open: boolean; onCl
             ))}
           </div>
         )}
+
+        <div className="config-section">
+          <h3>Reminders</h3>
+          {medications.length === 0 && (
+            <div className="config-sub" style={{ marginBottom: 8 }}>
+              Nothing here. Each reminder gets its own tile on the dashboard.
+            </div>
+          )}
+          {medications.map((med) => (
+            <div key={med.id} className="config-row">
+              <span>{med.name}</span>
+              <div className="tile-actions">
+                <button className="icon-btn" title="Edit" onClick={() => setReminder(med)}>
+                  ✎
+                </button>
+                <button className="icon-btn" title="Remove" onClick={() => deleteMedication(med.id)}>
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
+          <button className="btn btn-sm" style={{ marginTop: 8 }} onClick={() => setReminder('new')}>
+            + add reminder
+          </button>
+        </div>
 
         <div className="config-section">
           <h3>Scroll intervention</h3>
@@ -133,6 +163,54 @@ export default function TileConfigPanel({ open, onClose }: { open: boolean; onCl
 
         <div className="section-note">Local-first demo mode. No account, no cloud sync.</div>
       </div>
+
+      {reminder && (
+        <ReminderModal
+          item={reminder === 'new' ? null : reminder}
+          onDone={() => setReminder(null)}
+        />
+      )}
     </>
+  )
+}
+
+function ReminderModal({ item, onDone }: { item: Medication | null; onDone: () => void }) {
+  const addMedication = useAppStore((s) => s.addMedication)
+  const updateMedication = useAppStore((s) => s.updateMedication)
+  const [name, setName] = useState(item?.name || '')
+  const [scheduleTime, setScheduleTime] = useState(item?.scheduleTime || '')
+
+  function save() {
+    const patch = { name: name.trim() || 'Reminder', scheduleTime: scheduleTime || null }
+    if (item) {
+      updateMedication(item.id, patch)
+    } else {
+      addMedication({ ...patch, lastTakenAt: null, lateThresholdMin: 60 })
+    }
+    onDone()
+  }
+
+  return (
+    <div className="overlay">
+      <div className="overlay-card">
+        <div className="overlay-title">{item ? 'Edit reminder' : 'Add reminder'}</div>
+        <div className="field">
+          <label>Name</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Vitamin D" autoFocus />
+        </div>
+        <div className="field">
+          <label>Time — optional, 24h</label>
+          <input value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} placeholder="e.g. 08:00" />
+        </div>
+        <div className="overlay-actions" style={{ flexDirection: 'row' }}>
+          <button className="btn btn-primary" onClick={save}>
+            Save
+          </button>
+          <button className="btn btn-ghost" onClick={onDone}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
