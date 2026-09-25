@@ -250,6 +250,11 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'saw-state',
+      version: 1,
+      // v0 layouts put tiles in rows 0–1 where the full-width character banner now sits.
+      // Reset tiles to the current default so nothing overlaps the person.
+      migrate: (persisted) =>
+        ({ ...(persisted as Record<string, unknown>), tiles: defaultLayout }) as any,
       partialize: (s) => ({
         onboardingComplete: s.onboardingComplete,
         tiles: s.tiles,
