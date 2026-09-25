@@ -35,4 +35,6 @@ export const defaultLayout: TileConfig[] = [
   { type: 'weather', size: '1x1', position: { row: 6, col: 2 }, visible: true },
   { type: 'hyperfixation', size: '1x1', position: { row: 6, col: 3 }, visible: true },
   { type: 'activity', size: '2x1', position: { row: 6, col: 4 }, visible: true },
+  // Row 7
+  { type: 'resources', size: '1x1', position: { row: 7, col: 0 }, visible: true },
 ]

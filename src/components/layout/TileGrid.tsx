@@ -13,6 +13,7 @@ import CommunityTile from '../tiles/CommunityTile'
 import NewsTile from '../tiles/NewsTile'
 import ActivityTile from '../tiles/ActivityTile'
 import HyperfixationTile from '../tiles/HyperfixationTile'
+import ResourcesTile from '../tiles/ResourcesTile'
 import MockupTile from '../tiles/MockupTile'
 
 const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
@@ -29,6 +30,7 @@ const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
   news: NewsTile,
   activity: ActivityTile,
   hyperfixation: HyperfixationTile,
+  resources: ResourcesTile,
 }
 
 const COLS = 6

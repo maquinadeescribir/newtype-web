@@ -11,11 +11,13 @@ import type {
   LogKind,
   HyperItem,
   Hyperfixation,
+  Resource,
 } from '../types'
 import { TILE_META } from '../types'
 import { TIMER_COLORS } from '../constants/theme'
 import { defaultLayout } from '../constants/defaultLayout'
 import { SEED_INFLUENCERS } from '../data/community'
+import { SEED_RESOURCES } from '../data/resources'
 import { uid, tileRows } from '../lib/util'
 
 let timerColorIndex = 0
@@ -73,6 +75,11 @@ interface AppStore {
   addHyperfixationItem: (text: string, url?: string) => void
   deleteHyperfixationItem: (id: string) => void
   clearHyperfixation: () => void
+
+  resources: Resource[]
+  addResource: (r: Omit<Resource, 'id' | 'hidden'>) => void
+  toggleResourceHidden: (id: string) => void
+  deleteResource: (id: string) => void
 
   scrollEnabled: boolean
   scrollThresholdMin: number
@@ -332,6 +339,22 @@ export const useAppStore = create<AppStore>()(
         get().logEvent('hyperfixation', `Hyperfixation cleared`)
       },
 
+      resources: SEED_RESOURCES,
+      addResource: (r) => {
+        set({ resources: [{ ...r, id: uid(), hidden: false }, ...get().resources] })
+        get().logEvent('app', `Resource added: ${r.name}`)
+      },
+      toggleResourceHidden: (id) => {
+        const r = get().resources.find((x) => x.id === id)
+        set({ resources: get().resources.map((x) => (x.id === id ? { ...x, hidden: !x.hidden } : x)) })
+        if (r) get().logEvent('app', `Resource ${r.hidden ? 'shown' : 'hidden'}: ${r.name}`)
+      },
+      deleteResource: (id) => {
+        const r = get().resources.find((x) => x.id === id)
+        set({ resources: get().resources.filter((x) => x.id !== id) })
+        if (r) get().logEvent('app', `Resource removed: ${r.name}`)
+      },
+
       scrollEnabled: false,
       scrollThresholdMin: 10,
       scrollCoolDownMin: 5,
@@ -369,15 +392,15 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'saw-state',
-      version: 2,
+      version: 3,
       migrate: (persisted, version) => {
         const p = persisted as { tiles?: TileConfig[] } | undefined
         if (!p || (version as number) < 1) {
           // v0: stale positions overlap the full-width character → full reset
           return { ...(p ?? {}), tiles: defaultLayout } as any
         }
-        if ((version as number) < 2) {
-          // v1: add newly-introduced tiles without clobbering the user's layout
+        if ((version as number) < 3) {
+          // v1/v2: add newly-introduced tiles without clobbering the user's layout
           const saved = p.tiles ?? []
           const have = new Set(saved.map((t) => t.type))
           const missing = defaultLayout.filter((t) => !have.has(t.type))
@@ -396,6 +419,7 @@ export const useAppStore = create<AppStore>()(
         hyperfixation: s.hyperfixation,
         hyperfixationItems: s.hyperfixationItems,
         hyperfixationHistory: s.hyperfixationHistory,
+        resources: s.resources,
         scrollEnabled: s.scrollEnabled,
         scrollThresholdMin: s.scrollThresholdMin,
         scrollCoolDownMin: s.scrollCoolDownMin,

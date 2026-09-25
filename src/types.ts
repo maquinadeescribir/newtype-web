@@ -26,6 +26,7 @@ export type TileType =
   | 'news'
   | 'activity'
   | 'hyperfixation'
+  | 'resources'
 
 export interface TileConfig {
   type: TileType
@@ -86,6 +87,15 @@ export interface HyperItem {
 export interface Hyperfixation {
   topic: string
   startedAt: number
+}
+
+export interface Resource {
+  id: string
+  name: string
+  url: string
+  category: string
+  description: string
+  hidden: boolean
 }
 
 export type TimerType = 'countdown' | 'stopwatch'
@@ -164,6 +174,7 @@ export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize;
   news: { label: 'News', defaultSize: '2x1', icon: '📰' },
   activity: { label: 'Activity', defaultSize: '2x1', icon: '📈' },
   hyperfixation: { label: 'Hyperfixation', defaultSize: '1x1', icon: '🧠' },
+  resources: { label: 'Resources', defaultSize: '1x1', icon: '🧰' },
 }
 
 export const ALL_TILE_TYPES = Object.keys(TILE_META) as TileType[]
