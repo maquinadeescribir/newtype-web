@@ -101,7 +101,7 @@ select {
 
 .dashboard {
   flex: 1;
-  padding: 20px 22px 60px;
+  padding: 20px 22px 40px;
 }
 
 /* ---------- Grid ---------- */
@@ -109,8 +109,8 @@ select {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-auto-rows: 148px;
-  gap: var(--gap);
-  max-width: 1320px;
+  gap: 16px;
+  max-width: 1560px;
   margin: 0 auto;
 }
 
@@ -123,19 +123,64 @@ select {
 }
 
 .tile {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  --tile-accent: #3d444d;
+  background-color: var(--surface);
+  background-image:
+    radial-gradient(140% 140% at 100% 0%, color-mix(in srgb, var(--tile-accent) 15%, transparent), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 9px),
+    linear-gradient(180deg, var(--surface-raised), var(--surface));
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: border-color 0.15s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32), 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
 }
 
 .tile:hover {
-  border-color: var(--border-strong);
+  border-color: color-mix(in srgb, var(--tile-accent) 55%, var(--border-strong));
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.42), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
 }
+
+/* contrasting accent bar along the top of each tile */
+.tile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--tile-accent);
+  z-index: 2;
+}
+
+/* one contrasting hue per tile family */
+.tile-timer { --tile-accent: #ff006e; }
+.tile-scroll { --tile-accent: #f59e0b; }
+.tile-goals { --tile-accent: #ff9800; }
+.tile-context { --tile-accent: #2dd4bf; }
+.tile-ahh { --tile-accent: #f44336; }
+.tile-breathing { --tile-accent: #26c6da; }
+.tile-stretch { --tile-accent: #4caf50; }
+.tile-read { --tile-accent: #4fc3f7; }
+.tile-quicktask { --tile-accent: #ffc107; }
+.tile-briefing { --tile-accent: #f59e0b; }
+.tile-impact { --tile-accent: #b39ddb; }
+.tile-notes { --tile-accent: #9e9e9e; }
+.tile-mood { --tile-accent: #ec4899; }
+.tile-focus { --tile-accent: #8b5cf6; }
+.tile-nextevent { --tile-accent: #4fc3f7; }
+.tile-weather { --tile-accent: #38bdf8; }
+.tile-directory { --tile-accent: #4fc3f7; }
+.tile-trending { --tile-accent: #ff6b6b; }
+.tile-following { --tile-accent: #34d399; }
+.tile-watchout { --tile-accent: #ff9800; }
+.tile-news { --tile-accent: #f59e0b; }
+.tile-activity { --tile-accent: #2dd4bf; }
+.tile-hyperfixation { --tile-accent: #a78bfa; }
+.tile-med { --tile-accent: #6b7280; }
 
 .tile-header {
   display: flex;
@@ -164,6 +209,10 @@ select {
 .tile-character {
   border: none;
   background: transparent;
+  box-shadow: none;
+}
+.tile-character::before {
+  display: none;
 }
 
 .char-scene {
