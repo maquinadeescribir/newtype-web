@@ -4,12 +4,13 @@ export function uid(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
 }
 
-export function tileRows(size: TileSize): number {
-  return size[0] === '1' ? 1 : 2
+// TileSize is "WIDTHxHEIGHT" (natural reading): '2x1' = 2 wide, 1 tall.
+export function tileCols(size: TileSize): number {
+  return size[0] === '1' ? 1 : 2 // first char = width → columns
 }
 
-export function tileCols(size: TileSize): number {
-  return size[2] === '1' ? 1 : 2
+export function tileRows(size: TileSize): number {
+  return size[2] === '1' ? 1 : 2 // third char = height → rows
 }
 
 // countdown-style mm:ss (or h:mm:ss)
