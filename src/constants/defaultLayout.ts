@@ -47,4 +47,7 @@ export const defaultLayout: TileConfig[] = [
   { type: 'weight', size: '2x1', position: { row: 8, col: 2 }, visible: true },
   { type: 'coffee', size: '1x1', position: { row: 8, col: 4 }, visible: true },
   { type: 'food', size: '1x1', position: { row: 8, col: 5 }, visible: true },
+  // Row 9 — current hyperfixation topics (seeded from saved exports)
+  { type: 'solarpunky', size: '1x1', position: { row: 9, col: 0 }, visible: true },
+  { type: 'securityosint', size: '1x1', position: { row: 9, col: 1 }, visible: true },
 ]

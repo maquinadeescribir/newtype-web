@@ -26,6 +26,8 @@ export type TileType =
   | 'news'
   | 'activity'
   | 'hyperfixation'
+  | 'solarpunky'
+  | 'securityosint'
   | 'resources'
   | 'stim'
   | 'gooddeeds'
@@ -226,6 +228,8 @@ export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize;
   news: { label: 'News', defaultSize: '2x1', icon: '📰' },
   activity: { label: 'Activity', defaultSize: '2x1', icon: '📈' },
   hyperfixation: { label: 'Hyperfixation', defaultSize: '1x1', icon: '🧠' },
+  solarpunky: { label: 'Solarpunk', defaultSize: '1x1', icon: '🌿' },
+  securityosint: { label: 'Security · OSINT', defaultSize: '1x1', icon: '🛡️' },
   resources: { label: 'Resources', defaultSize: '1x1', icon: '🧰' },
   stim: { label: 'Stim Menu', defaultSize: '1x1', icon: '🌀' },
   gooddeeds: { label: 'Do Good', defaultSize: '1x1', icon: '🌍' },

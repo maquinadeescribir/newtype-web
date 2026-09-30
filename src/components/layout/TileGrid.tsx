@@ -13,6 +13,7 @@ import CommunityTile from '../tiles/CommunityTile'
 import NewsTile from '../tiles/NewsTile'
 import ActivityTile from '../tiles/ActivityTile'
 import HyperfixationTile from '../tiles/HyperfixationTile'
+import HyperfixationTopicTile from '../tiles/HyperfixationTopicTile'
 import ResourcesTile from '../tiles/ResourcesTile'
 import GoodThingsTile from '../tiles/GoodThingsTile'
 import DaySummaryTile from '../tiles/DaySummaryTile'
@@ -39,6 +40,8 @@ const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
   news: NewsTile,
   activity: ActivityTile,
   hyperfixation: HyperfixationTile,
+  solarpunky: () => <HyperfixationTopicTile topicId="solarpunky" />,
+  securityosint: () => <HyperfixationTopicTile topicId="securityosint" />,
   resources: ResourcesTile,
   goodthings: GoodThingsTile,
   daysummary: DaySummaryTile,

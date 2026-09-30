@@ -25,11 +25,16 @@ import { defaultLayout } from '../constants/defaultLayout'
 import { SEED_INFLUENCERS } from '../data/community'
 import { SEED_RESOURCES } from '../data/resources'
 import { SEED_GOOD_DEEDS } from '../data/goodDeeds'
+import { HYPERFIXATION_TOPICS } from '../data/hyperfixations'
 import { uid, tileRows, todayKey } from '../lib/util'
 
 let timerColorIndex = 0
 
 const LOG_CAP = 300
+
+const initialTopicItems: Record<string, HyperItem[]> = Object.fromEntries(
+  HYPERFIXATION_TOPICS.map((t) => [t.id, t.seed]),
+)
 
 interface AppStore {
   onboardingComplete: boolean
@@ -82,6 +87,10 @@ interface AppStore {
   addHyperfixationItem: (text: string, url?: string) => void
   deleteHyperfixationItem: (id: string) => void
   clearHyperfixation: () => void
+
+  topicItems: Record<string, HyperItem[]>
+  addTopicItem: (topicId: string, text: string, url?: string) => void
+  deleteTopicItem: (topicId: string, itemId: string) => void
 
   resources: Resource[]
   addResource: (r: Omit<Resource, 'id' | 'hidden'>) => void
@@ -382,6 +391,17 @@ export const useAppStore = create<AppStore>()(
         get().logEvent('hyperfixation', `Hyperfixation cleared`)
       },
 
+      topicItems: initialTopicItems,
+      addTopicItem: (topicId, text, url) => {
+        const item: HyperItem = { id: uid(), text, url, at: Date.now() }
+        set({ topicItems: { ...get().topicItems, [topicId]: [item, ...(get().topicItems[topicId] ?? [])] } })
+        const topic = HYPERFIXATION_TOPICS.find((t) => t.id === topicId)
+        get().logEvent('hyperfixation', `Saved note on ${topic?.topic ?? topicId}`)
+      },
+      deleteTopicItem: (topicId, itemId) => {
+        set({ topicItems: { ...get().topicItems, [topicId]: (get().topicItems[topicId] ?? []).filter((i) => i.id !== itemId) } })
+      },
+
       resources: SEED_RESOURCES,
       addResource: (r) => {
         set({ resources: [{ ...r, id: uid(), hidden: false }, ...get().resources] })
@@ -526,15 +546,15 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'saw-state',
-      version: 5,
+      version: 6,
       migrate: (persisted, version) => {
         const p = persisted as { tiles?: TileConfig[] } | undefined
         if (!p || (version as number) < 1) {
           // v0: stale positions overlap the full-width character → full reset
           return { ...(p ?? {}), tiles: defaultLayout } as any
         }
-        if ((version as number) < 5) {
-          // v1–v4: add newly-introduced tiles without clobbering the user's layout
+        if ((version as number) < 6) {
+          // v1–v5: add newly-introduced tiles without clobbering the user's layout
           const saved = p.tiles ?? []
           const have = new Set(saved.map((t) => t.type))
           const missing = defaultLayout.filter((t) => !have.has(t.type))
@@ -553,6 +573,7 @@ export const useAppStore = create<AppStore>()(
         hyperfixation: s.hyperfixation,
         hyperfixationItems: s.hyperfixationItems,
         hyperfixationHistory: s.hyperfixationHistory,
+        topicItems: s.topicItems,
         resources: s.resources,
         goodThings: s.goodThings,
         waterLog: s.waterLog,

@@ -180,6 +180,8 @@ select {
 .tile-news { --tile-accent: #f59e0b; }
 .tile-activity { --tile-accent: #2dd4bf; }
 .tile-hyperfixation { --tile-accent: #a78bfa; }
+.tile-solarpunky { --tile-accent: #4ade80; }
+.tile-securityosint { --tile-accent: #60a5fa; }
 .tile-resources { --tile-accent: #22d3ee; }
 .tile-med { --tile-accent: #6b7280; }
 

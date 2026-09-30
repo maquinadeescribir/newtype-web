@@ -8,6 +8,7 @@ import CommunityPanel from './components/CommunityPanel'
 import { NewsPanel } from './components/tiles/NewsTile'
 import ActivityPanel from './components/ActivityPanel'
 import HyperfixationPanel from './components/HyperfixationPanel'
+import HyperfixationTopicPanel from './components/HyperfixationTopicPanel'
 import ResourcesPanel from './components/ResourcesPanel'
 import GoodThingsPanel from './components/GoodThingsPanel'
 import DaySummaryPanel from './components/DaySummaryPanel'
@@ -17,6 +18,7 @@ import BodyScanPanel from './components/BodyScanPanel'
 import FoodPanel from './components/FoodPanel'
 import WeightPanel from './components/WeightPanel'
 import { useScrollIntervention } from './hooks/useScrollIntervention'
+import { HYPERFIXATION_TOPICS } from './data/hyperfixations'
 import type { CommunityVariant } from './types'
 
 export default function App() {
@@ -85,6 +87,9 @@ export default function App() {
       {activePanel === 'news' && <NewsPanel />}
       {activePanel === 'activity' && <ActivityPanel />}
       {activePanel === 'hyperfixation' && <HyperfixationPanel />}
+      {HYPERFIXATION_TOPICS.map((t) =>
+        activePanel === t.id ? <HyperfixationTopicPanel key={t.id} topicId={t.id} /> : null,
+      )}
       {activePanel === 'resources' && <ResourcesPanel />}
       {activePanel === 'goodthings' && <GoodThingsPanel />}
       {activePanel === 'daysummary' && <DaySummaryPanel />}
