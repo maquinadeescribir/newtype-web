@@ -24,6 +24,8 @@ import BodyScanTile from '../tiles/BodyScanTile'
 import CoffeeTile from '../tiles/CoffeeTile'
 import FoodTile from '../tiles/FoodTile'
 import WeightTile from '../tiles/WeightTile'
+import AyudameTile from '../tiles/AyudameTile'
+import EdcTile from '../tiles/EdcTile'
 import MockupTile from '../tiles/MockupTile'
 
 const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
@@ -52,6 +54,8 @@ const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
   coffee: CoffeeTile,
   food: FoodTile,
   weight: WeightTile,
+  ayudame: AyudameTile,
+  edc: EdcTile,
 }
 
 const COLS = 6

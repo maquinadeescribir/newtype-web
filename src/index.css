@@ -2461,3 +2461,126 @@ a.hf-item-text:hover {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* ---------- Ayúdame ---------- */
+.ayuda-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.ayuda-mode {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ayuda-mode:hover {
+  color: var(--text);
+}
+.ayuda-mode.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+.ayuda-tagline {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 4px 0 10px;
+}
+.ayuda-steps {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.ayuda-steps li::marker {
+  color: var(--accent);
+  font-weight: 700;
+}
+.ayuda-note {
+  border: 1px solid rgba(255, 152, 0, 0.4);
+  background: rgba(255, 152, 0, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+.ayuda-foot {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.45;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+/* ---------- EDC ---------- */
+.edc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.edc-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  text-align: left;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 11px;
+  color: var(--text);
+  cursor: pointer;
+}
+.edc-row:hover {
+  border-color: var(--border-strong);
+}
+.edc-row.on {
+  border-color: rgba(76, 175, 80, 0.5);
+  background: rgba(76, 175, 80, 0.07);
+}
+.edc-check {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--green);
+  margin-top: 1px;
+}
+.edc-row.on .edc-check {
+  background: rgba(76, 175, 80, 0.18);
+  border-color: var(--green);
+}
+.edc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.edc-name {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.edc-why {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}

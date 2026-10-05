@@ -17,6 +17,8 @@ import GoodDeedsPanel from './components/GoodDeedsPanel'
 import BodyScanPanel from './components/BodyScanPanel'
 import FoodPanel from './components/FoodPanel'
 import WeightPanel from './components/WeightPanel'
+import AyudamePanel from './components/AyudamePanel'
+import EdcPanel from './components/EdcPanel'
 import { useScrollIntervention } from './hooks/useScrollIntervention'
 import { HYPERFIXATION_TOPICS } from './data/hyperfixations'
 import type { CommunityVariant } from './types'
@@ -98,6 +100,8 @@ export default function App() {
       {activePanel === 'bodyscan' && <BodyScanPanel />}
       {activePanel === 'food' && <FoodPanel />}
       {activePanel === 'weight' && <WeightPanel />}
+      {activePanel === 'ayudame' && <AyudamePanel />}
+      {activePanel === 'edc' && <EdcPanel />}
     </div>
   )
 }

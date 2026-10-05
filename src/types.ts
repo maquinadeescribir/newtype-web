@@ -38,6 +38,8 @@ export type TileType =
   | 'coffee'
   | 'food'
   | 'weight'
+  | 'ayudame'
+  | 'edc'
 
 export interface TileConfig {
   type: TileType
@@ -240,6 +242,8 @@ export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize;
   coffee: { label: 'Coffee', defaultSize: '1x1', icon: '☕' },
   food: { label: 'Food', defaultSize: '1x1', icon: '🍽️' },
   weight: { label: 'Weight', defaultSize: '2x1', icon: '⚖️' },
+  ayudame: { label: 'Ayúdame', defaultSize: '2x1', icon: '🆘' },
+  edc: { label: 'EDC', defaultSize: '2x1', icon: '🎒' },
 }
 
 export const ALL_TILE_TYPES = Object.keys(TILE_META) as TileType[]

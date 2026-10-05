@@ -50,4 +50,7 @@ export const defaultLayout: TileConfig[] = [
   // Row 9 — current hyperfixation topics (seeded from saved exports)
   { type: 'solarpunky', size: '1x1', position: { row: 9, col: 0 }, visible: true },
   { type: 'securityosint', size: '1x1', position: { row: 9, col: 1 }, visible: true },
+  // Row 9 tail — support tiles (FR-AY Ayúdame, FR-EDC everyday carry)
+  { type: 'ayudame', size: '2x1', position: { row: 9, col: 2 }, visible: true },
+  { type: 'edc', size: '2x1', position: { row: 9, col: 4 }, visible: true },
 ]

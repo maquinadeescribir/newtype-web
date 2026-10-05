@@ -133,6 +133,9 @@ interface AppStore {
   addWeight: (value: number, unit: WeightEntry['unit']) => void
   deleteWeight: (id: string) => void
 
+  edcOwned: string[]
+  toggleEdc: (id: string) => void
+
   scrollEnabled: boolean
   scrollThresholdMin: number
   scrollCoolDownMin: number
@@ -509,6 +512,12 @@ export const useAppStore = create<AppStore>()(
       },
       deleteWeight: (id) => set({ weightEntries: get().weightEntries.filter((w) => w.id !== id) }),
 
+      edcOwned: [],
+      toggleEdc: (id) => {
+        const cur = get().edcOwned
+        set({ edcOwned: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] })
+      },
+
       scrollEnabled: false,
       scrollThresholdMin: 10,
       scrollCoolDownMin: 5,
@@ -546,15 +555,15 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'saw-state',
-      version: 6,
+      version: 7,
       migrate: (persisted, version) => {
         const p = persisted as { tiles?: TileConfig[] } | undefined
         if (!p || (version as number) < 1) {
           // v0: stale positions overlap the full-width character → full reset
           return { ...(p ?? {}), tiles: defaultLayout } as any
         }
-        if ((version as number) < 6) {
-          // v1–v5: add newly-introduced tiles without clobbering the user's layout
+        if ((version as number) < 7) {
+          // v1–v6: add newly-introduced tiles without clobbering the user's layout
           const saved = p.tiles ?? []
           const have = new Set(saved.map((t) => t.type))
           const missing = defaultLayout.filter((t) => !have.has(t.type))
@@ -584,6 +593,7 @@ export const useAppStore = create<AppStore>()(
         coffeeLog: s.coffeeLog,
         foodEntries: s.foodEntries,
         weightEntries: s.weightEntries,
+        edcOwned: s.edcOwned,
         scrollEnabled: s.scrollEnabled,
         scrollThresholdMin: s.scrollThresholdMin,
         scrollCoolDownMin: s.scrollCoolDownMin,
