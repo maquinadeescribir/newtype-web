@@ -27,6 +27,7 @@ import { SEED_RESOURCES } from '../data/resources'
 import { SEED_GOOD_DEEDS } from '../data/goodDeeds'
 import { HYPERFIXATION_TOPICS } from '../data/hyperfixations'
 import { uid, tileRows, todayKey } from '../lib/util'
+import { envIndex, type EnvReading } from '../data/env'
 
 let timerColorIndex = 0
 
@@ -135,6 +136,11 @@ interface AppStore {
 
   edcOwned: string[]
   toggleEdc: (id: string) => void
+
+  envLevels: Record<string, number>
+  setEnvLevel: (id: string, level: number) => void
+  envLog: EnvReading[]
+  saveEnvReading: () => void
 
   scrollEnabled: boolean
   scrollThresholdMin: number
@@ -518,6 +524,17 @@ export const useAppStore = create<AppStore>()(
         set({ edcOwned: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] })
       },
 
+      envLevels: {},
+      setEnvLevel: (id, level) =>
+        set({ envLevels: { ...get().envLevels, [id]: Math.max(0, Math.min(5, level)) } }),
+      envLog: [],
+      saveEnvReading: () => {
+        const levels = { ...get().envLevels }
+        const score = envIndex(levels)
+        set({ envLog: [{ id: uid(), at: Date.now(), score, levels }, ...get().envLog].slice(0, 60) })
+        get().logEvent('app', `Environment reading: ${score}`)
+      },
+
       scrollEnabled: false,
       scrollThresholdMin: 10,
       scrollCoolDownMin: 5,
@@ -555,15 +572,15 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'saw-state',
-      version: 7,
+      version: 8,
       migrate: (persisted, version) => {
         const p = persisted as { tiles?: TileConfig[] } | undefined
         if (!p || (version as number) < 1) {
           // v0: stale positions overlap the full-width character → full reset
           return { ...(p ?? {}), tiles: defaultLayout } as any
         }
-        if ((version as number) < 7) {
-          // v1–v6: add newly-introduced tiles without clobbering the user's layout
+        if ((version as number) < 8) {
+          // v1–v7: add newly-introduced tiles without clobbering the user's layout
           const saved = p.tiles ?? []
           const have = new Set(saved.map((t) => t.type))
           const missing = defaultLayout.filter((t) => !have.has(t.type))
@@ -594,6 +611,8 @@ export const useAppStore = create<AppStore>()(
         foodEntries: s.foodEntries,
         weightEntries: s.weightEntries,
         edcOwned: s.edcOwned,
+        envLevels: s.envLevels,
+        envLog: s.envLog,
         scrollEnabled: s.scrollEnabled,
         scrollThresholdMin: s.scrollThresholdMin,
         scrollCoolDownMin: s.scrollCoolDownMin,

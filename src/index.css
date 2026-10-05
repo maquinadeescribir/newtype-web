@@ -2584,3 +2584,133 @@ a.hf-item-text:hover {
   color: var(--text-muted);
   line-height: 1.45;
 }
+
+/* ---------- Environment gauge ---------- */
+.env-tile {
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+.env-gauge {
+  width: 100%;
+  max-height: 100%;
+  display: block;
+}
+.env-track {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+.env-fill {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
+  transition: stroke 0.3s ease;
+}
+.env-needle {
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  transition: all 0.3s ease;
+}
+.env-gauge-lg {
+  width: 150px;
+  flex-shrink: 0;
+}
+.env-readout {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.env-readout-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.env-score {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+.env-word {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.env-factor {
+  margin-bottom: 10px;
+}
+.env-factor-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.env-factor-name {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.env-factor-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.env-scale {
+  display: flex;
+  gap: 5px;
+}
+.env-seg {
+  flex: 1;
+  height: 16px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  cursor: pointer;
+  padding: 0;
+}
+.env-seg:hover {
+  border-color: var(--border-strong);
+}
+.env-actions {
+  margin: 12px 0;
+}
+.env-tip {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.env-log {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.env-log-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.env-log-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.env-log-time {
+  flex: 1;
+}
+.env-log-score {
+  font-weight: 700;
+  color: var(--text);
+}

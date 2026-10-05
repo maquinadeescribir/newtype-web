@@ -26,6 +26,7 @@ import FoodTile from '../tiles/FoodTile'
 import WeightTile from '../tiles/WeightTile'
 import AyudameTile from '../tiles/AyudameTile'
 import EdcTile from '../tiles/EdcTile'
+import EnvTile from '../tiles/EnvTile'
 import MockupTile from '../tiles/MockupTile'
 
 const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
@@ -56,6 +57,7 @@ const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
   weight: WeightTile,
   ayudame: AyudameTile,
   edc: EdcTile,
+  env: EnvTile,
 }
 
 const COLS = 6
@@ -81,7 +83,7 @@ export default function TileGrid() {
         }
         return (
           <div key={tile.type} className={`tile tile-${tile.type}${isMock ? ' tile-mock' : ''}`} style={style}>
-            {tile.type !== 'character' && (
+            {tile.type !== 'character' && tile.type !== 'env' && (
               <div className="tile-header">
                 <span className="icon">{meta.icon}</span>
                 <span>{meta.label}</span>

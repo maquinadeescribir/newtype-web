@@ -53,4 +53,6 @@ export const defaultLayout: TileConfig[] = [
   // Row 9 tail — support tiles (FR-AY Ayúdame, FR-EDC everyday carry)
   { type: 'ayudame', size: '2x1', position: { row: 9, col: 2 }, visible: true },
   { type: 'edc', size: '2x1', position: { row: 9, col: 4 }, visible: true },
+  // Row 10 — environment gauge (textless tile; click for specifics)
+  { type: 'env', size: '1x1', position: { row: 10, col: 0 }, visible: true },
 ]
