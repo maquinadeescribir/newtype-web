@@ -33,6 +33,7 @@ function weatherLabel(code: number): string {
 
 type MetrolinkAlert = { header: string; desc: string }
 type TrafficInfo = { live: string; typical: string }
+type DelayStatus = { maxDelayMin: number; delayedCount: number }
 
 // Metrolink GTFS-RT service alerts — keyless + CORS-open (Appendix A §12.6)
 const ALERTS_URL = 'https://cdn.simplifytransit.com/metrolink/alerts/service-alerts.pb'
@@ -41,6 +42,9 @@ const ALERTS_URL = 'https://cdn.simplifytransit.com/metrolink/alerts/service-ale
 // Token is user-supplied via localStorage ('saw-mapbox-token'): GitHub push protection
 // blocks committing the token, and the app is local-first — the key belongs in the user's browser.
 const TRAFFIC_COORDS = '-117.9248,33.8703;-118.2355,34.0562'
+
+// Backend proxy (Cloudflare Worker) — holds Metrolink's secret key, returns CORS JSON
+const PROXY_URL = 'https://saw-proxy.neurospicyass.workers.dev'
 
 function alertEnglish(ts: { translation?: Array<{ text?: string }> | null } | null | undefined): string {
   return ts?.translation?.[0]?.text ?? ''
@@ -140,6 +144,27 @@ export default function MorningTile() {
     }
   }, [mapboxToken])
 
+  // FR-RT-CC-04: live Metrolink delays via the backend proxy (holds the secret key)
+  const [delays, setDelays] = useState<DelayStatus | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    fetch(`${PROXY_URL}/metrolink/trips`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled || !Array.isArray(d?.trips)) return
+        const oc = d.trips.filter((t: { routeId?: string }) => /orange county|ieoc|oc line/i.test(t.routeId ?? ''))
+        const secs = oc.map((t: { delaySec?: number }) => t.delaySec ?? 0)
+        setDelays({
+          maxDelayMin: Math.max(0, ...secs.map((s: number) => Math.round(s / 60))),
+          delayedCount: secs.filter((s: number) => s > 60).length,
+        })
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const cd = countdownTo(leaveTime)
   const doneCount = checklist.filter((c) => c.done).length
   const alertCount = metrolinkAlerts?.length ?? 0
@@ -157,7 +182,8 @@ export default function MorningTile() {
               <span className="morning-dot" /> Shuttle — City National Plaza
             </div>
             <div className="morning-line">
-              <span className="morning-dot" /> Metrolink — Orange County line
+              <span className="morning-dot" /> Metrolink —{' '}
+              {delays === null ? <i>—</i> : delays.maxDelayMin > 0 ? <b className="morning-alert-n">{delays.maxDelayMin}m late</b> : <i>on time</i>}
             </div>
             <div className="morning-line">
               <span className="morning-dot" /> Amtrak — Fullerton → LA Union
