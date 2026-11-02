@@ -181,6 +181,9 @@ interface AppStore {
   toggleChecklistItem: (id: string) => void
   resetChecklist: () => void
 
+  mapboxToken: string
+  setMapboxToken: (t: string) => void
+
   scrollOverlayOpen: boolean
   openScrollOverlay: () => void
   closeScrollOverlay: () => void
@@ -598,6 +601,9 @@ export const useAppStore = create<AppStore>()(
       },
       resetChecklist: () => set({ checklist: DEFAULT_CHECKLIST.map((c) => ({ ...c, done: false })) }),
 
+      mapboxToken: '',
+      setMapboxToken: (t) => set({ mapboxToken: t }),
+
       scrollOverlayOpen: false,
       openScrollOverlay: () => set({ scrollOverlayOpen: true }),
       closeScrollOverlay: () => set({ scrollOverlayOpen: false }),
@@ -653,6 +659,7 @@ export const useAppStore = create<AppStore>()(
         routineMode: s.routineMode,
         leaveTime: s.leaveTime,
         checklist: s.checklist,
+        mapboxToken: s.mapboxToken,
       }),
     },
   ),

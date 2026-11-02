@@ -20,7 +20,11 @@ export default function TileConfigPanel({ open, onClose }: { open: boolean; onCl
   const medications = useAppStore((s) => s.medications)
   const deleteMedication = useAppStore((s) => s.deleteMedication)
 
+  const mapboxToken = useAppStore((s) => s.mapboxToken)
+  const setMapboxToken = useAppStore((s) => s.setMapboxToken)
+
   const [reminder, setReminder] = useState<Medication | 'new' | null>(null)
+  const [tokenDraft, setTokenDraft] = useState(mapboxToken)
 
   if (!open) return null
 
@@ -136,6 +140,41 @@ export default function TileConfigPanel({ open, onClose }: { open: boolean; onCl
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+
+        <div className="config-section">
+          <h3>Live data</h3>
+          <div className="config-sub" style={{ marginBottom: 8 }}>
+            Mapbox token for live traffic. Stored only in this browser — never synced.
+          </div>
+          <div className="config-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+            <input
+              type="password"
+              value={tokenDraft}
+              onChange={(e) => setTokenDraft(e.target.value)}
+              placeholder="pk.eyJ1…"
+              style={{ background: 'var(--surface-raised)', color: 'var(--text)', border: '1px solid var(--border-strong)', borderRadius: 6, padding: '6px 8px' }}
+            />
+            <div className="tile-actions" style={{ justifyContent: 'flex-end', gap: 6 }}>
+              <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                {mapboxToken ? 'Token saved' : 'No token'}
+              </span>
+              <button className="btn btn-sm btn-primary" onClick={() => setMapboxToken(tokenDraft.trim())}>
+                Save
+              </button>
+              {mapboxToken && (
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => {
+                    setMapboxToken('')
+                    setTokenDraft('')
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

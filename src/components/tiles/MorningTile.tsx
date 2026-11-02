@@ -114,13 +114,16 @@ export default function MorningTile() {
   }, [])
 
   // FR-RT-CC-02: live drive time Fullerton → LA Union (Mapbox traffic, user token)
+  const mapboxToken = useAppStore((s) => s.mapboxToken)
   const [traffic, setTraffic] = useState<TrafficInfo | null>(null)
   useEffect(() => {
-    const token = localStorage.getItem('saw-mapbox-token')
-    if (!token) return
+    if (!mapboxToken) {
+      setTraffic(null)
+      return
+    }
     let cancelled = false
     fetch(
-      `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${TRAFFIC_COORDS}?access_token=${token}&overview=false`,
+      `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${TRAFFIC_COORDS}?access_token=${mapboxToken}&overview=false`,
     )
       .then((r) => r.json())
       .then((d) => {
@@ -135,7 +138,7 @@ export default function MorningTile() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [mapboxToken])
 
   const cd = countdownTo(leaveTime)
   const doneCount = checklist.filter((c) => c.done).length
