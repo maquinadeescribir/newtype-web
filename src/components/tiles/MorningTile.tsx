@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAppStore } from '../../store/useAppStore'
+import { transit_realtime } from 'gtfs-realtime-bindings'
 
 // FR-RT-CC-05/06: countdown to a hard leave time; past zero is a factual "over", not shame.
 function countdownTo(leaveTime: string): { text: string; overdue: boolean } {
@@ -28,6 +29,22 @@ function weatherLabel(code: number): string {
   if (code >= 80 && code <= 82) return 'showers'
   if (code >= 95) return 'storm'
   return '—'
+}
+
+type MetrolinkAlert = { header: string; desc: string }
+
+// Metrolink GTFS-RT service alerts — keyless + CORS-open (Appendix A §12.6)
+const ALERTS_URL = 'https://cdn.simplifytransit.com/metrolink/alerts/service-alerts.pb'
+
+function alertEnglish(ts: { translation?: Array<{ text?: string }> | null } | null | undefined): string {
+  return ts?.translation?.[0]?.text ?? ''
+}
+
+// Commute-relevant: the user's line (Orange County) and endpoints (Fullerton ↔ LA Union).
+function isRelevantAlert(a: transit_realtime.IAlert): boolean {
+  const routes = (a.informedEntity ?? []).map((ie) => ie.routeId ?? '').join(' ')
+  const text = `${alertEnglish(a.headerText)} ${alertEnglish(a.descriptionText)}`.toLowerCase()
+  return /orange county|ieoc|fullerton|union station|los angeles|oc line/.test(`${routes} ${text}`)
 }
 
 export default function MorningTile() {
@@ -65,8 +82,34 @@ export default function MorningTile() {
     }
   }, [])
 
+  // FR-RT-CC-03: live Metrolink service alerts (keyless feed)
+  const [metrolinkAlerts, setMetrolinkAlerts] = useState<MetrolinkAlert[] | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    fetch(ALERTS_URL)
+      .then((r) => r.arrayBuffer())
+      .then((buf) => {
+        if (cancelled) return
+        const feed = transit_realtime.FeedMessage.decode(new Uint8Array(buf))
+        const alerts = (feed.entity ?? [])
+          .map((e) => e.alert)
+          .filter((a): a is transit_realtime.IAlert => a != null)
+          .filter(isRelevantAlert)
+          .map((a) => ({
+            header: alertEnglish(a.headerText),
+            desc: alertEnglish(a.descriptionText),
+          }))
+        setMetrolinkAlerts(alerts)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const cd = countdownTo(leaveTime)
   const doneCount = checklist.filter((c) => c.done).length
+  const alertCount = metrolinkAlerts?.length ?? 0
 
   return (
     <div className="tile-body morning-body">
@@ -86,6 +129,24 @@ export default function MorningTile() {
             <div className="morning-line">
               <span className="morning-dot" /> Amtrak — Fullerton → LA Union
             </div>
+          </div>
+          <div className="morning-alerts">
+            <div className="morning-alerts-head">Service alerts</div>
+            {metrolinkAlerts === null ? (
+              <div className="morning-line">
+                <span className="morning-dot" /> Status unavailable
+              </div>
+            ) : alertCount === 0 ? (
+              <div className="morning-line">
+                <span className="morning-dot" /> No active Metrolink alerts
+              </div>
+            ) : (
+              metrolinkAlerts.map((a, i) => (
+                <div key={i} className="morning-alert" title={a.desc}>
+                  {a.header}
+                </div>
+              ))
+            )}
           </div>
           <div className="morning-checklist">
             <div className="morning-checklist-head">
@@ -134,7 +195,14 @@ export default function MorningTile() {
               <span className="morning-dot" /> Fullerton — <i>—</i>
             </div>
             <div className="morning-line">
-              <span className="morning-dot" /> Metrolink — <i>—</i>
+              <span className="morning-dot" /> Metrolink —{' '}
+              {metrolinkAlerts === null ? (
+                <i>—</i>
+              ) : alertCount > 0 ? (
+                <b className="morning-alert-n">{alertCount} alert{alertCount > 1 ? 's' : ''}</b>
+              ) : (
+                <i>no alerts</i>
+              )}
             </div>
             <div className="morning-line">
               <span className="morning-dot" /> Amtrak — <i>—</i>
