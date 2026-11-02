@@ -41,6 +41,7 @@ export type TileType =
   | 'ayudame'
   | 'edc'
   | 'env'
+  | 'morning'
 
 export interface TileConfig {
   type: TileType
@@ -246,8 +247,17 @@ export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize;
   ayudame: { label: 'Ayúdame', defaultSize: '2x1', icon: '🆘' },
   edc: { label: 'EDC', defaultSize: '2x1', icon: '🎒' },
   env: { label: 'Environment', defaultSize: '1x1', icon: '🌡️' },
+  morning: { label: 'Context', defaultSize: '2x2', icon: '⏱️' },
 }
 
 export const ALL_TILE_TYPES = Object.keys(TILE_META) as TileType[]
+
+export type RoutineMode = 'off' | 'preparing' | 'commuting'
+
+export interface ChecklistItem {
+  id: string
+  label: string
+  done: boolean
+}
 
 export const TIMER_PRESETS_MIN = [2, 5, 10, 15, 20, 25, 30, 35, 45, 60, 90, 120]

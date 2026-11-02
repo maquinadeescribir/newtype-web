@@ -4,10 +4,11 @@ export const TILE_GRID_COLS_WIDE = 6
 export const TILE_GRID_COLS_NARROW = 4
 
 // FR-TS-02: default layout ships out of box — §5.3 tile set (reminders are derived, not listed here)
-// The character is the hero banner: full-width across the top (TileGrid spans it 1 / -1).
+// Top row (FR-RT §6.32): character (Body Double) spans 2/3 (4 cols) + Context (Current Context) spans 1/3 (2 cols).
 export const defaultLayout: TileConfig[] = [
-  // Row 0–1: character (full-width banner)
+  // Row 0–1: Body Double (2/3) + Current Context (1/3) top-row split
   { type: 'character', size: '2x2', position: { row: 0, col: 0 }, visible: true },
+  { type: 'morning', size: '2x2', position: { row: 0, col: 4 }, visible: true },
   // Row 2–3
   { type: 'timer', size: '2x2', position: { row: 2, col: 0 }, visible: true },
   { type: 'briefing', size: '2x1', position: { row: 2, col: 2 }, visible: true },

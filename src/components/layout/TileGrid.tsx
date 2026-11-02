@@ -27,6 +27,7 @@ import WeightTile from '../tiles/WeightTile'
 import AyudameTile from '../tiles/AyudameTile'
 import EdcTile from '../tiles/EdcTile'
 import EnvTile from '../tiles/EnvTile'
+import MorningTile from '../tiles/MorningTile'
 import MockupTile from '../tiles/MockupTile'
 
 const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
@@ -58,6 +59,7 @@ const BUILT_TILES: Partial<Record<TileType, () => JSX.Element>> = {
   ayudame: AyudameTile,
   edc: EdcTile,
   env: EnvTile,
+  morning: MorningTile,
 }
 
 const COLS = 6
@@ -78,7 +80,7 @@ export default function TileGrid() {
         const meta = TILE_META[tile.type]
         const isCharacter = tile.type === 'character'
         const style: CSSProperties = {
-          gridColumn: isCharacter ? '1 / -1' : `${tile.position.col + 1} / span ${tileCols(tile.size)}`,
+          gridColumn: isCharacter ? '1 / span 4' : `${tile.position.col + 1} / span ${tileCols(tile.size)}`,
           gridRow: `${tile.position.row + 1} / span ${tileRows(tile.size)}`,
         }
         return (

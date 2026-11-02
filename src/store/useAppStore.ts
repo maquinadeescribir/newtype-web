@@ -18,6 +18,8 @@ import type {
   BodyEntry,
   FoodEntry,
   WeightEntry,
+  RoutineMode,
+  ChecklistItem,
 } from '../types'
 import { TILE_META } from '../types'
 import { TIMER_COLORS } from '../constants/theme'
@@ -30,6 +32,10 @@ import { uid, tileRows, todayKey } from '../lib/util'
 import { envIndex, type EnvReading } from '../data/env'
 
 let timerColorIndex = 0
+
+const DEFAULT_CHECKLIST: ChecklistItem[] = [
+  'badge', 'phone', 'keys', 'wallet', 'coffee', 'lunch', 'computer', 'headphones', 'glasses', 'sunnies', 'mask',
+].map((label) => ({ id: label, label, done: false }))
 
 const LOG_CAP = 300
 
@@ -165,6 +171,15 @@ interface AppStore {
   lastActivity: string
   lastActivityAt: number | null
   setLastActivity: (text: string) => void
+
+  routineMode: RoutineMode
+  leaveTime: string
+  checklist: ChecklistItem[]
+  setRoutineMode: (m: RoutineMode) => void
+  setLeaveTime: (t: string) => void
+  leaveHouse: () => void
+  toggleChecklistItem: (id: string) => void
+  resetChecklist: () => void
 
   scrollOverlayOpen: boolean
   openScrollOverlay: () => void
@@ -566,20 +581,37 @@ export const useAppStore = create<AppStore>()(
       lastActivityAt: null,
       setLastActivity: (text) => set({ lastActivity: text, lastActivityAt: Date.now() }),
 
+      routineMode: 'preparing',
+      leaveTime: '06:30',
+      checklist: DEFAULT_CHECKLIST,
+      setRoutineMode: (m) => {
+        set({ routineMode: m })
+        get().logEvent('app', `Routine: ${m}`)
+      },
+      setLeaveTime: (t) => set({ leaveTime: t }),
+      leaveHouse: () => {
+        set({ routineMode: 'commuting' })
+        get().logEvent('app', 'Leaving house')
+      },
+      toggleChecklistItem: (id) => {
+        set({ checklist: get().checklist.map((c) => (c.id === id ? { ...c, done: !c.done } : c)) })
+      },
+      resetChecklist: () => set({ checklist: DEFAULT_CHECKLIST.map((c) => ({ ...c, done: false })) }),
+
       scrollOverlayOpen: false,
       openScrollOverlay: () => set({ scrollOverlayOpen: true }),
       closeScrollOverlay: () => set({ scrollOverlayOpen: false }),
     }),
     {
       name: 'saw-state',
-      version: 8,
+      version: 9,
       migrate: (persisted, version) => {
         const p = persisted as { tiles?: TileConfig[] } | undefined
         if (!p || (version as number) < 1) {
           // v0: stale positions overlap the full-width character → full reset
           return { ...(p ?? {}), tiles: defaultLayout } as any
         }
-        if ((version as number) < 8) {
+        if ((version as number) < 9) {
           // v1–v7: add newly-introduced tiles without clobbering the user's layout
           const saved = p.tiles ?? []
           const have = new Set(saved.map((t) => t.type))
@@ -618,6 +650,9 @@ export const useAppStore = create<AppStore>()(
         scrollCoolDownMin: s.scrollCoolDownMin,
         lastActivity: s.lastActivity,
         lastActivityAt: s.lastActivityAt,
+        routineMode: s.routineMode,
+        leaveTime: s.leaveTime,
+        checklist: s.checklist,
       }),
     },
   ),

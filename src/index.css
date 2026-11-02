@@ -2714,3 +2714,132 @@ a.hf-item-text:hover {
   font-weight: 700;
   color: var(--text);
 }
+
+/* ---------- Current Context (morning routine & commute) tile ---------- */
+.tile-morning { --tile-accent: #22d3ee; }
+
+.morning-body {
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.morning-mode {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+}
+
+.morning-mode-commute {
+  color: var(--tile-accent);
+}
+
+.morning-count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.morning-count-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+
+.morning-count b {
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.morning-overdue {
+  color: #f59e0b;
+}
+
+.morning-time-input {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 2px 6px;
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.morning-status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.morning-line {
+  font-size: 12px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.morning-line i {
+  color: var(--text-muted);
+  font-style: normal;
+}
+
+.morning-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tile-accent);
+  flex-shrink: 0;
+}
+
+.morning-leave,
+.morning-arrive,
+.morning-reset {
+  width: 100%;
+}
+
+.morning-reset {
+  margin-top: 4px;
+}
+
+.morning-checklist {
+  border-top: 1px solid var(--border-strong);
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.morning-checklist-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-muted);
+}
+
+.morning-checklist-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.morning-item {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.morning-item.done {
+  background: color-mix(in srgb, var(--tile-accent) 22%, transparent);
+  border-color: var(--tile-accent);
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
