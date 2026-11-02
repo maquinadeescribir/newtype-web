@@ -32,9 +32,15 @@ function weatherLabel(code: number): string {
 }
 
 type MetrolinkAlert = { header: string; desc: string }
+type TrafficInfo = { live: string; typical: string }
 
 // Metrolink GTFS-RT service alerts — keyless + CORS-open (Appendix A §12.6)
 const ALERTS_URL = 'https://cdn.simplifytransit.com/metrolink/alerts/service-alerts.pb'
+
+// Mapbox traffic (public token, CORS-open) — Fullerton → LA Union Station, driving.
+// Token is user-supplied via localStorage ('saw-mapbox-token'): GitHub push protection
+// blocks committing the token, and the app is local-first — the key belongs in the user's browser.
+const TRAFFIC_COORDS = '-117.9248,33.8703;-118.2355,34.0562'
 
 function alertEnglish(ts: { translation?: Array<{ text?: string }> | null } | null | undefined): string {
   return ts?.translation?.[0]?.text ?? ''
@@ -107,6 +113,30 @@ export default function MorningTile() {
     }
   }, [])
 
+  // FR-RT-CC-02: live drive time Fullerton → LA Union (Mapbox traffic, user token)
+  const [traffic, setTraffic] = useState<TrafficInfo | null>(null)
+  useEffect(() => {
+    const token = localStorage.getItem('saw-mapbox-token')
+    if (!token) return
+    let cancelled = false
+    fetch(
+      `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${TRAFFIC_COORDS}?access_token=${token}&overview=false`,
+    )
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled || !d?.routes?.[0]) return
+        const rt = d.routes[0]
+        setTraffic({
+          live: `${Math.round(rt.duration / 60)}m`,
+          typical: `${Math.round((rt.duration_typical ?? rt.duration) / 60)}m`,
+        })
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const cd = countdownTo(leaveTime)
   const doneCount = checklist.filter((c) => c.done).length
   const alertCount = metrolinkAlerts?.length ?? 0
@@ -128,6 +158,9 @@ export default function MorningTile() {
             </div>
             <div className="morning-line">
               <span className="morning-dot" /> Amtrak — Fullerton → LA Union
+            </div>
+            <div className="morning-line">
+              <span className="morning-dot" /> Traffic — {traffic ? <b>{traffic.live}</b> : <i>—</i>}
             </div>
           </div>
           <div className="morning-alerts">
@@ -192,7 +225,9 @@ export default function MorningTile() {
               <span className="morning-dot" /> Weather — {weather ? <b>{weather.temp} {weather.cond}</b> : <i>—</i>}
             </div>
             <div className="morning-line">
-              <span className="morning-dot" /> Fullerton — <i>—</i>
+              <span className="morning-dot" /> Traffic —{' '}
+              {traffic ? <b>{traffic.live}</b> : <i>—</i>}
+              {traffic && traffic.live !== traffic.typical ? <i> (typ {traffic.typical})</i> : null}
             </div>
             <div className="morning-line">
               <span className="morning-dot" /> Metrolink —{' '}
