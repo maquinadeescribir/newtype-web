@@ -2871,3 +2871,15 @@ a.hf-item-text:hover {
 .morning-alert-n {
   color: #f59e0b;
 }
+
+.morning-ok {
+  color: #22c55e;
+}
+
+.morning-late {
+  color: #f59e0b;
+}
+
+.morning-cancelled {
+  color: #ef4444;
+}

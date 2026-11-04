@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type DependencyList } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { transit_realtime } from 'gtfs-realtime-bindings'
 
@@ -32,18 +32,15 @@ function weatherLabel(code: number): string {
 }
 
 type MetrolinkAlert = { header: string; desc: string }
-type TrafficInfo = { live: string; typical: string }
-type DelayStatus = { maxDelayMin: number; delayedCount: number }
+type TrafficInfo = { live: string; typical: string; heavy: boolean }
+type DelayStatus = { maxDelayMin: number; cancelledCount: number }
 
 // Metrolink GTFS-RT service alerts — keyless + CORS-open (Appendix A §12.6)
 const ALERTS_URL = 'https://cdn.simplifytransit.com/metrolink/alerts/service-alerts.pb'
-
-// Mapbox traffic (public token, CORS-open) — Fullerton → LA Union Station, driving.
-// Token is user-supplied via localStorage ('saw-mapbox-token'): GitHub push protection
-// blocks committing the token, and the app is local-first — the key belongs in the user's browser.
+const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=33.87&longitude=-117.92&current_weather=true'
+// Mapbox traffic (public token, CORS-open) — token is user-supplied via the store (never in the repo).
 const TRAFFIC_COORDS = '-117.9248,33.8703;-118.2355,34.0562'
-
-// Backend proxy (Cloudflare Worker) — holds Metrolink's secret key, returns CORS JSON
+// Backend proxy (Cloudflare Worker) — holds Metrolink's secret key, returns CORS JSON.
 const PROXY_URL = 'https://saw-proxy.neurospicyass.workers.dev'
 
 function alertEnglish(ts: { translation?: Array<{ text?: string }> | null } | null | undefined): string {
@@ -57,6 +54,29 @@ function isRelevantAlert(a: transit_realtime.IAlert): boolean {
   return /orange county|ieoc|fullerton|union station|los angeles|oc line/.test(`${routes} ${text}`)
 }
 
+// Poll a fetcher on mount and every intervalMs. null result = unavailable (distinct from "no data yet").
+function usePolling<T>(fetcher: () => Promise<T | null>, intervalMs: number, deps: DependencyList = []): T | null {
+  const [value, setValue] = useState<T | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    const run = () => {
+      fetcher()
+        .then((v) => {
+          if (!cancelled) setValue(v)
+        })
+        .catch(() => {})
+    }
+    run()
+    const t = setInterval(run, intervalMs)
+    return () => {
+      cancelled = true
+      clearInterval(t)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps)
+  return value
+}
+
 export default function MorningTile() {
   const routineMode = useAppStore((s) => s.routineMode)
   const leaveTime = useAppStore((s) => s.leaveTime)
@@ -66,6 +86,7 @@ export default function MorningTile() {
   const toggleChecklistItem = useAppStore((s) => s.toggleChecklistItem)
   const resetChecklist = useAppStore((s) => s.resetChecklist)
   const setRoutineMode = useAppStore((s) => s.setRoutineMode)
+  const mapboxToken = useAppStore((s) => s.mapboxToken)
 
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
@@ -73,101 +94,114 @@ export default function MorningTile() {
     return () => clearInterval(t)
   }, [])
 
-  // FR-RT-CC-01: live local weather (Fullerton, CA) — Open-Meteo, no key
-  const [weather, setWeather] = useState<{ temp: string; cond: string } | null>(null)
-  useEffect(() => {
-    let cancelled = false
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=33.87&longitude=-117.92&current_weather=true')
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancelled || !d?.current_weather) return
-        setWeather({
-          temp: `${Math.round(d.current_weather.temperature)}°`,
-          cond: weatherLabel(d.current_weather.weathercode),
-        })
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // FR-RT-CC-01: live weather — poll 15 min (slow-moving data)
+  const weather = usePolling<{ temp: string; cond: string }>(
+    () =>
+      fetch(WEATHER_URL)
+        .then((r) => r.json())
+        .then((d) =>
+          d?.current_weather
+            ? { temp: `${Math.round(d.current_weather.temperature)}°`, cond: weatherLabel(d.current_weather.weathercode) }
+            : null,
+        ),
+    15 * 60 * 1000,
+  )
 
-  // FR-RT-CC-03: live Metrolink service alerts (keyless feed)
-  const [metrolinkAlerts, setMetrolinkAlerts] = useState<MetrolinkAlert[] | null>(null)
-  useEffect(() => {
-    let cancelled = false
-    fetch(ALERTS_URL)
-      .then((r) => r.arrayBuffer())
-      .then((buf) => {
-        if (cancelled) return
-        const feed = transit_realtime.FeedMessage.decode(new Uint8Array(buf))
-        const alerts = (feed.entity ?? [])
-          .map((e) => e.alert)
-          .filter((a): a is transit_realtime.IAlert => a != null)
-          .filter(isRelevantAlert)
-          .map((a) => ({
-            header: alertEnglish(a.headerText),
-            desc: alertEnglish(a.descriptionText),
-          }))
-        setMetrolinkAlerts(alerts)
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // FR-RT-CC-02: live traffic — poll 5 min; needs the user's Mapbox token
+  const traffic = usePolling<TrafficInfo>(
+    async () => {
+      if (!mapboxToken) return null
+      const r = await fetch(
+        `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${TRAFFIC_COORDS}?access_token=${mapboxToken}&overview=false`,
+      )
+      const d = await r.json()
+      if (!d?.routes?.[0]) return null
+      const rt = d.routes[0]
+      const liveSec = rt.duration
+      const typicalSec = rt.duration_typical ?? rt.duration
+      return {
+        live: `${Math.round(liveSec / 60)}m`,
+        typical: `${Math.round(typicalSec / 60)}m`,
+        heavy: liveSec > typicalSec + 60, // >1 min slower than typical = congestion
+      }
+    },
+    5 * 60 * 1000,
+    [mapboxToken],
+  )
 
-  // FR-RT-CC-02: live drive time Fullerton → LA Union (Mapbox traffic, user token)
-  const mapboxToken = useAppStore((s) => s.mapboxToken)
-  const [traffic, setTraffic] = useState<TrafficInfo | null>(null)
-  useEffect(() => {
-    if (!mapboxToken) {
-      setTraffic(null)
-      return
-    }
-    let cancelled = false
-    fetch(
-      `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${TRAFFIC_COORDS}?access_token=${mapboxToken}&overview=false`,
-    )
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancelled || !d?.routes?.[0]) return
-        const rt = d.routes[0]
-        setTraffic({
-          live: `${Math.round(rt.duration / 60)}m`,
-          typical: `${Math.round((rt.duration_typical ?? rt.duration) / 60)}m`,
-        })
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [mapboxToken])
+  // FR-RT-CC-03: live service alerts — poll 60s
+  const metrolinkAlerts = usePolling<MetrolinkAlert[]>(
+    async () => {
+      const r = await fetch(ALERTS_URL)
+      const buf = await r.arrayBuffer()
+      const feed = transit_realtime.FeedMessage.decode(new Uint8Array(buf))
+      return (feed.entity ?? [])
+        .map((e) => e.alert)
+        .filter((a): a is transit_realtime.IAlert => a != null)
+        .filter(isRelevantAlert)
+        .map((a) => ({ header: alertEnglish(a.headerText), desc: alertEnglish(a.descriptionText) }))
+    },
+    60 * 1000,
+  )
 
-  // FR-RT-CC-04: live Metrolink delays via the backend proxy (holds the secret key)
-  const [delays, setDelays] = useState<DelayStatus | null>(null)
-  useEffect(() => {
-    let cancelled = false
-    fetch(`${PROXY_URL}/metrolink/trips`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancelled || !Array.isArray(d?.trips)) return
-        const oc = d.trips.filter((t: { routeId?: string }) => /orange county|ieoc|oc line/i.test(t.routeId ?? ''))
-        const secs = oc.map((t: { delaySec?: number }) => t.delaySec ?? 0)
-        setDelays({
-          maxDelayMin: Math.max(0, ...secs.map((s: number) => Math.round(s / 60))),
-          delayedCount: secs.filter((s: number) => s > 60).length,
-        })
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // FR-RT-CC-04: live delays — poll 60s (the "will I miss my train" data)
+  const delays = usePolling<DelayStatus>(
+    async () => {
+      const r = await fetch(`${PROXY_URL}/metrolink/trips`)
+      const d = await r.json()
+      if (!Array.isArray(d?.trips)) return null
+      const oc = d.trips.filter((t: { routeId?: string }) => /orange county|ieoc|oc line/i.test(t.routeId ?? ''))
+      const secs = oc.map((t: { delaySec?: number }) => t.delaySec ?? 0)
+      const cancelled = oc.filter((t: { cancelled?: boolean }) => t.cancelled).length
+      return {
+        maxDelayMin: Math.max(0, ...secs.map((s: number) => Math.round(s / 60))),
+        cancelledCount: cancelled,
+      }
+    },
+    60 * 1000,
+  )
 
   const cd = countdownTo(leaveTime)
   const doneCount = checklist.filter((c) => c.done).length
   const alertCount = metrolinkAlerts?.length ?? 0
+
+  // Loud, scannable delay state (shared across both screens)
+  const delayText =
+    delays === null
+      ? null
+      : delays.cancelledCount > 0
+        ? { text: 'CANCELLED', cls: 'morning-cancelled' }
+        : delays.maxDelayMin > 0
+          ? { text: `${delays.maxDelayMin}m late`, cls: 'morning-late' }
+          : { text: 'on time', cls: 'morning-ok' }
+
+  const alertsSection = (
+    <div className="morning-alerts">
+      <div className="morning-alerts-head">Service alerts</div>
+      {metrolinkAlerts === null ? (
+        <div className="morning-line">
+          <span className="morning-dot" /> Status unavailable
+        </div>
+      ) : alertCount === 0 ? (
+        <div className="morning-line">
+          <span className="morning-dot" /> No active Metrolink alerts
+        </div>
+      ) : (
+        metrolinkAlerts.map((a, i) => (
+          <div key={i} className="morning-alert" title={a.desc}>
+            {a.header}
+          </div>
+        ))
+      )}
+    </div>
+  )
+
+  const delayLine = (
+    <div className="morning-line">
+      <span className="morning-dot" /> Metrolink —{' '}
+      {delayText === null ? <i>—</i> : <b className={delayText.cls}>{delayText.text}</b>}
+    </div>
+  )
 
   return (
     <div className="tile-body morning-body">
@@ -181,35 +215,16 @@ export default function MorningTile() {
             <div className="morning-line">
               <span className="morning-dot" /> Shuttle — City National Plaza
             </div>
-            <div className="morning-line">
-              <span className="morning-dot" /> Metrolink —{' '}
-              {delays === null ? <i>—</i> : delays.maxDelayMin > 0 ? <b className="morning-alert-n">{delays.maxDelayMin}m late</b> : <i>on time</i>}
-            </div>
+            {delayLine}
             <div className="morning-line">
               <span className="morning-dot" /> Amtrak — Fullerton → LA Union
             </div>
             <div className="morning-line">
-              <span className="morning-dot" /> Traffic — {traffic ? <b>{traffic.live}</b> : <i>—</i>}
+              <span className="morning-dot" /> Traffic —{' '}
+              {traffic ? <b className={traffic.heavy ? 'morning-late' : ''}>{traffic.live}</b> : <i>—</i>}
             </div>
           </div>
-          <div className="morning-alerts">
-            <div className="morning-alerts-head">Service alerts</div>
-            {metrolinkAlerts === null ? (
-              <div className="morning-line">
-                <span className="morning-dot" /> Status unavailable
-              </div>
-            ) : alertCount === 0 ? (
-              <div className="morning-line">
-                <span className="morning-dot" /> No active Metrolink alerts
-              </div>
-            ) : (
-              metrolinkAlerts.map((a, i) => (
-                <div key={i} className="morning-alert" title={a.desc}>
-                  {a.header}
-                </div>
-              ))
-            )}
-          </div>
+          {alertsSection}
           <div className="morning-checklist">
             <div className="morning-checklist-head">
               <span>Checklist</span>
@@ -255,23 +270,15 @@ export default function MorningTile() {
             </div>
             <div className="morning-line">
               <span className="morning-dot" /> Traffic —{' '}
-              {traffic ? <b>{traffic.live}</b> : <i>—</i>}
+              {traffic ? <b className={traffic.heavy ? 'morning-late' : ''}>{traffic.live}</b> : <i>—</i>}
               {traffic && traffic.live !== traffic.typical ? <i> (typ {traffic.typical})</i> : null}
             </div>
-            <div className="morning-line">
-              <span className="morning-dot" /> Metrolink —{' '}
-              {metrolinkAlerts === null ? (
-                <i>—</i>
-              ) : alertCount > 0 ? (
-                <b className="morning-alert-n">{alertCount} alert{alertCount > 1 ? 's' : ''}</b>
-              ) : (
-                <i>no alerts</i>
-              )}
-            </div>
+            {delayLine}
             <div className="morning-line">
               <span className="morning-dot" /> Amtrak — <i>—</i>
             </div>
           </div>
+          {alertsSection}
           <button className="btn btn-primary btn-sm morning-leave" onClick={leaveHouse}>
             Leaving house
           </button>
