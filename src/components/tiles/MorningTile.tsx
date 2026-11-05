@@ -160,13 +160,15 @@ export default function MorningTile() {
   )
 
   // FR-RT-CC-08/09/10: live departure board (train #, ETA, computed delay, cancellations) — poll 60s
+  const [boardDir, setBoardDir] = useState<'toLA' | 'toFullerton'>('toLA')
   const board = usePolling<BoardRow[]>(
     async () => {
-      const r = await fetch(`${PROXY_URL}/metrolink/board`)
+      const r = await fetch(`${PROXY_URL}/metrolink/board?dir=${boardDir}`)
       const d = await r.json()
       return Array.isArray(d?.board) ? d.board : null
     },
     60 * 1000,
+    [boardDir],
   )
 
   const cd = countdownTo(leaveTime)
@@ -175,7 +177,14 @@ export default function MorningTile() {
 
   const boardSection = (
     <div className="morning-board">
-      <div className="morning-board-head">Trains → LA Union</div>
+      <button
+        className="morning-board-head morning-board-toggle"
+        onClick={() => setBoardDir((d) => (d === 'toLA' ? 'toFullerton' : 'toLA'))}
+        aria-label="Toggle train direction"
+      >
+        Trains {boardDir === 'toLA' ? '→ LA Union' : '→ Fullerton'}
+        <span className="morning-board-flip">⇄</span>
+      </button>
       {board === null ? (
         <div className="morning-line">
           <span className="morning-dot" /> Status unavailable

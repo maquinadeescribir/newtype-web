@@ -2898,6 +2898,31 @@ a.hf-item-text:hover {
   margin-bottom: 5px;
 }
 
+.morning-board-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.morning-board-toggle:hover .morning-board-flip {
+  opacity: 1;
+}
+
+.morning-board-flip {
+  opacity: 0.4;
+  font-size: 11px;
+  transition: opacity 0.15s;
+}
+
 .morning-board-list {
   display: flex;
   flex-direction: column;
