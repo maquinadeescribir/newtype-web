@@ -33,7 +33,15 @@ function weatherLabel(code: number): string {
 
 type MetrolinkAlert = { header: string; desc: string }
 type TrafficInfo = { live: string; typical: string; heavy: boolean }
-type DelayStatus = { maxDelayMin: number; cancelledCount: number }
+type BoardRow = {
+  train: string
+  line: string
+  dest: string
+  sched: string
+  eta: string | null
+  delayMin: number | null
+  status: 'cancelled' | 'no_live' | 'late' | 'on_time'
+}
 
 // Metrolink GTFS-RT service alerts — keyless + CORS-open (Appendix A §12.6)
 const ALERTS_URL = 'https://cdn.simplifytransit.com/metrolink/alerts/service-alerts.pb'
@@ -51,7 +59,7 @@ function alertEnglish(ts: { translation?: Array<{ text?: string }> | null } | nu
 function isRelevantAlert(a: transit_realtime.IAlert): boolean {
   const routes = (a.informedEntity ?? []).map((ie) => ie.routeId ?? '').join(' ')
   const text = `${alertEnglish(a.headerText)} ${alertEnglish(a.descriptionText)}`.toLowerCase()
-  return /orange county|ieoc|fullerton|union station|los angeles|oc line/.test(`${routes} ${text}`)
+  return /orange county|ieoc|fullerton|union station|los angeles|oc line|91 line|riverside/.test(`${routes} ${text}`)
 }
 
 // Poll a fetcher on mount and every intervalMs. null result = unavailable (distinct from "no data yet").
@@ -75,6 +83,13 @@ function usePolling<T>(fetcher: () => Promise<T | null>, intervalMs: number, dep
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
   return value
+}
+
+function lineShort(line: string): string {
+  if (/orange/i.test(line)) return 'OC'
+  if (/^91| 91/i.test(line)) return '91'
+  if (/ieoc|inland/i.test(line)) return 'IE-OC'
+  return line.replace(/ line$/i, '')
 }
 
 export default function MorningTile() {
@@ -144,19 +159,12 @@ export default function MorningTile() {
     60 * 1000,
   )
 
-  // FR-RT-CC-04: live delays — poll 60s (the "will I miss my train" data)
-  const delays = usePolling<DelayStatus>(
+  // FR-RT-CC-08/09/10: live departure board (train #, ETA, computed delay, cancellations) — poll 60s
+  const board = usePolling<BoardRow[]>(
     async () => {
-      const r = await fetch(`${PROXY_URL}/metrolink/trips`)
+      const r = await fetch(`${PROXY_URL}/metrolink/board`)
       const d = await r.json()
-      if (!Array.isArray(d?.trips)) return null
-      const oc = d.trips.filter((t: { routeId?: string }) => /orange county|ieoc|oc line/i.test(t.routeId ?? ''))
-      const secs = oc.map((t: { delaySec?: number }) => t.delaySec ?? 0)
-      const cancelled = oc.filter((t: { cancelled?: boolean }) => t.cancelled).length
-      return {
-        maxDelayMin: Math.max(0, ...secs.map((s: number) => Math.round(s / 60))),
-        cancelledCount: cancelled,
-      }
+      return Array.isArray(d?.board) ? d.board : null
     },
     60 * 1000,
   )
@@ -165,15 +173,41 @@ export default function MorningTile() {
   const doneCount = checklist.filter((c) => c.done).length
   const alertCount = metrolinkAlerts?.length ?? 0
 
-  // Loud, scannable delay state (shared across both screens)
-  const delayText =
-    delays === null
-      ? null
-      : delays.cancelledCount > 0
-        ? { text: 'CANCELLED', cls: 'morning-cancelled' }
-        : delays.maxDelayMin > 0
-          ? { text: `${delays.maxDelayMin}m late`, cls: 'morning-late' }
-          : { text: 'on time', cls: 'morning-ok' }
+  const boardSection = (
+    <div className="morning-board">
+      <div className="morning-board-head">Trains → LA Union</div>
+      {board === null ? (
+        <div className="morning-line">
+          <span className="morning-dot" /> Status unavailable
+        </div>
+      ) : board.length === 0 ? (
+        <div className="morning-line">
+          <span className="morning-dot" /> No upcoming trains
+        </div>
+      ) : (
+        <div className="morning-board-list">
+          {board.map((row) => {
+            const st =
+              row.status === 'cancelled'
+                ? { t: 'CANCELLED', c: 'morning-cancelled' }
+                : row.status === 'late'
+                  ? { t: `${row.delayMin}m late`, c: 'morning-late' }
+                  : row.status === 'on_time'
+                    ? { t: 'on time', c: 'morning-ok' }
+                    : { t: '—', c: 'morning-muted' }
+            return (
+              <div key={row.train + row.sched} className="morning-board-row">
+                <span className="morning-board-train">{row.train}</span>
+                <span className="morning-board-line">{lineShort(row.line)}</span>
+                <span className="morning-board-time">{row.eta ?? row.sched}</span>
+                <span className={`morning-board-status ${st.c}`}>{st.t}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 
   const alertsSection = (
     <div className="morning-alerts">
@@ -196,34 +230,12 @@ export default function MorningTile() {
     </div>
   )
 
-  const delayLine = (
-    <div className="morning-line">
-      <span className="morning-dot" /> Metrolink —{' '}
-      {delayText === null ? <i>—</i> : <b className={delayText.cls}>{delayText.text}</b>}
-    </div>
-  )
-
   return (
     <div className="tile-body morning-body">
       {routineMode === 'commuting' ? (
         <>
           <div className="morning-mode morning-mode-commute">In transit</div>
-          <div className="morning-status">
-            <div className="morning-line">
-              <span className="morning-dot" /> Metro — shuttle vs subway
-            </div>
-            <div className="morning-line">
-              <span className="morning-dot" /> Shuttle — City National Plaza
-            </div>
-            {delayLine}
-            <div className="morning-line">
-              <span className="morning-dot" /> Amtrak — Fullerton → LA Union
-            </div>
-            <div className="morning-line">
-              <span className="morning-dot" /> Traffic —{' '}
-              {traffic ? <b className={traffic.heavy ? 'morning-late' : ''}>{traffic.live}</b> : <i>—</i>}
-            </div>
-          </div>
+          {boardSection}
           {alertsSection}
           <div className="morning-checklist">
             <div className="morning-checklist-head">
@@ -273,11 +285,8 @@ export default function MorningTile() {
               {traffic ? <b className={traffic.heavy ? 'morning-late' : ''}>{traffic.live}</b> : <i>—</i>}
               {traffic && traffic.live !== traffic.typical ? <i> (typ {traffic.typical})</i> : null}
             </div>
-            {delayLine}
-            <div className="morning-line">
-              <span className="morning-dot" /> Amtrak — <i>—</i>
-            </div>
           </div>
+          {boardSection}
           {alertsSection}
           <button className="btn btn-primary btn-sm morning-leave" onClick={leaveHouse}>
             Leaving house

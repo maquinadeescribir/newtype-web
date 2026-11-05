@@ -2883,3 +2883,56 @@ a.hf-item-text:hover {
 .morning-cancelled {
   color: #ef4444;
 }
+
+.morning-board {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 8px;
+  margin-top: 6px;
+}
+
+.morning-board-head {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+  margin-bottom: 5px;
+}
+
+.morning-board-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.morning-board-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.morning-board-train {
+  font-weight: 700;
+  min-width: 36px;
+  font-variant-numeric: tabular-nums;
+}
+
+.morning-board-line {
+  opacity: 0.55;
+  font-size: 11px;
+  min-width: 20px;
+}
+
+.morning-board-time {
+  font-variant-numeric: tabular-nums;
+}
+
+.morning-board-status {
+  margin-left: auto;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.morning-muted {
+  opacity: 0.5;
+}
