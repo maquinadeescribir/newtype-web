@@ -1,6 +1,6 @@
 import { useEffect, useState, type DependencyList } from 'react'
 import { useAppStore } from '../../store/useAppStore'
-import { transit_realtime } from 'gtfs-realtime-bindings'
+import type { transit_realtime } from 'gtfs-realtime-bindings'
 
 // FR-RT-CC-05/06: countdown to a hard leave time; past zero is a factual "over", not shame.
 function countdownTo(leaveTime: string): { text: string; overdue: boolean } {
@@ -149,6 +149,7 @@ export default function MorningTile() {
     async () => {
       const r = await fetch(ALERTS_URL)
       const buf = await r.arrayBuffer()
+      const { transit_realtime } = await import('gtfs-realtime-bindings')
       const feed = transit_realtime.FeedMessage.decode(new Uint8Array(buf))
       return (feed.entity ?? [])
         .map((e) => e.alert)
