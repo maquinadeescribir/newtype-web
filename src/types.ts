@@ -247,7 +247,7 @@ export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize;
   ayudame: { label: 'Ayúdame', defaultSize: '2x1', icon: '🆘' },
   edc: { label: 'EDC', defaultSize: '2x1', icon: '🎒' },
   env: { label: 'Environment', defaultSize: '1x1', icon: '🌡️' },
-  morning: { label: 'Context', defaultSize: '2x2', icon: '⏱️' },
+  morning: { label: 'At a Glance', defaultSize: '2x2', icon: '⏱️' },
 }
 
 export const ALL_TILE_TYPES = Object.keys(TILE_META) as TileType[]
