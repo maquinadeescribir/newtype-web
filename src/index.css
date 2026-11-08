@@ -2961,3 +2961,32 @@ a.hf-item-text:hover {
 .morning-muted {
   opacity: 0.5;
 }
+
+/* Day-part switcher (FR-DP-04) */
+.daypart-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.daypart-btn {
+  flex: 1 1 auto;
+  padding: 3px 6px;
+  font-size: 11px;
+  font-family: inherit;
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.daypart-btn:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.daypart-btn.active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--surface-alt);
+}
