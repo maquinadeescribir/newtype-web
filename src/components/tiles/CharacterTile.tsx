@@ -2,6 +2,10 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { buildResponse } from '../../services/dialogue'
 import type { DayPart } from '../../types'
+import Scene from '../character/scenes'
+import { useReaction } from '../character/useReaction'
+import { REACTION_BURST } from '../character/reactions'
+import '../character/character.css'
 
 // FR-DP-02: per-day-part body-double scene (v1: emoji + label + accent, layered over the art).
 const DAY_PART_SCENE: Record<DayPart, { emoji: string; label: string; accent: string }> = {
@@ -27,6 +31,7 @@ export default function CharacterTile() {
   const lastActivity = useAppStore((s) => s.lastActivity)
   const createTimer = useAppStore((s) => s.createTimer)
 
+  const { reaction, seq } = useReaction()
   const [listening, setListening] = useState(false)
   const [input, setInput] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -83,14 +88,17 @@ export default function CharacterTile() {
     <div
       className="char-scene"
       data-daypart={dayPart}
+      data-scene={dayPart}
+      data-state={effectiveState}
+      data-reaction={reaction ?? 'none'}
       style={{ '--scene-accent': DAY_PART_SCENE[dayPart].accent } as CSSProperties}
     >
-      <img
-        className="char-art"
-        data-state={effectiveState}
-        src="./assets/scene-combined.png"
-        alt="Lofi office companion seated at a desk, with city and mountains visible through the windows"
-      />
+      <Scene dayPart={dayPart} />
+      {reaction && (
+        <span key={seq} className="char-burst" aria-hidden="true">
+          {REACTION_BURST[reaction]}
+        </span>
+      )}
       <div className="char-vignette" aria-hidden="true" />
       <div className="char-daypart" role="status" aria-label={`Scene: ${DAY_PART_SCENE[dayPart].label}`}>
         <span className="char-daypart-emoji" aria-hidden="true">
