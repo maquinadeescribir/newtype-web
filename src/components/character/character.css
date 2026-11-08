@@ -1,0 +1,88 @@
+/* Body Double: SVG scene + animation system (CSS only). Reactions are driven by [data-reaction] on .char-scene. */
+.char-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ---------- idle ---------- */
+.cf { animation: cf-breathe 4.8s ease-in-out infinite; }
+.cf-eyes { animation: cf-blink 5.5s infinite; transform-origin: 200px 152px; }
+.cf-head { animation: cf-bob 4.8s ease-in-out infinite; }
+.cf-mouth { transform-origin: 200px 166px; }
+.sc-scroll { animation: sc-scroll 5s linear infinite; }
+.sc-steam { animation: sc-steam 2.8s ease-in-out infinite; }
+.sc-cloud { animation: sc-cloud 24s ease-in-out infinite alternate; }
+
+@keyframes cf-breathe { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-1.5px) scale(1.012); } }
+@keyframes cf-bob { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(1.2deg); } }
+@keyframes cf-blink { 0%, 94%, 100% { transform: scaleY(1); } 96.5% { transform: scaleY(0.1); } }
+@keyframes sc-scroll { from { transform: translateX(0); } to { transform: translateX(-320px); } }
+@keyframes sc-steam { 0%, 100% { opacity: 0.2; transform: translateY(2px); } 50% { opacity: 0.8; transform: translateY(-3px); } }
+@keyframes sc-cloud { from { transform: translateX(-10px); } to { transform: translateX(40px); } }
+
+/* ---------- scene transition (backdrop remounts when dayPart changes) ---------- */
+.char-backdrop { animation: scene-in 0.7s ease-out both; }
+@keyframes scene-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ---------- speaking (characterState) ---------- */
+.char-scene[data-state='speaking'] .cf-mouth { animation: r-talk 0.28s ease-in-out infinite; }
+.char-scene[data-state='thinking'] .cf-head { animation: r-think 1.6s ease-in-out infinite; }
+.char-scene[data-state='listening'] .cf-head { transform: rotate(-3deg); animation: none; }
+@keyframes r-talk { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.9) scaleX(0.9); } }
+@keyframes r-think { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(3deg); } }
+
+/* ---------- reactions (~0.8-1.5s) ---------- */
+.char-scene[data-reaction='nod'] .cf-head { animation: r-nod 0.9s ease-in-out 1; }
+.char-scene[data-reaction='celebrate'] .cf { animation: r-jump 1.2s ease-out 1; }
+.char-scene[data-reaction='celebrate'] .cf-arm { animation: r-arm-up 1.2s ease-in-out 1; }
+.char-scene[data-reaction='focus'] .cf-head { animation: r-lean 1.5s ease-in-out 1; }
+.char-scene[data-reaction='focus'] .cf-eyes { animation: r-narrow 1.5s ease-in-out 1; }
+.char-scene[data-reaction='smile'] .cf-mouth { animation: r-smile 1.2s ease-in-out 1; }
+.char-scene[data-reaction='smile'] .cf-head { animation: r-tilt 1.2s ease-in-out 1; }
+.char-scene[data-reaction='soothe'] .cf { animation: r-sway 1.5s ease-in-out 1; }
+.char-scene[data-reaction='wave'] .cf-arm { animation: r-wave 1.2s ease-in-out 1; }
+.char-scene[data-reaction='sip'] .cf-arm { animation: r-sip 1.4s ease-in-out 1; }
+.char-scene[data-reaction='sip'] .cf-head { animation: r-tilt-back 1.4s ease-in-out 1; }
+.char-scene[data-reaction='write'] .cf-arm { animation: r-write 1s ease-in-out 1; }
+.char-scene[data-reaction='alert'] .cf { animation: r-alert 0.9s ease-in-out 1; }
+.char-scene[data-reaction='alert'] .cf-eyes { animation: r-wide 0.9s ease-in-out 1; }
+
+@keyframes r-nod { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(5px); } 50% { transform: translateY(0); } 75% { transform: translateY(4px); } }
+@keyframes r-jump { 0%, 100% { transform: translateY(0); } 30% { transform: translateY(-14px) scale(1.02); } 60% { transform: translateY(0); } 80% { transform: translateY(-5px); } }
+@keyframes r-arm-up { 0%, 100% { transform: rotate(0deg); } 25%, 75% { transform: rotate(168deg); } 50% { transform: rotate(150deg); } }
+@keyframes r-lean { 0%, 100% { transform: translateY(0) rotate(0); } 25%, 80% { transform: translate(3px, 5px) rotate(4deg); } }
+@keyframes r-narrow { 0%, 100% { transform: scaleY(1); } 25%, 80% { transform: scaleY(0.55); } }
+@keyframes r-smile { 0%, 100% { transform: scale(1); } 30%, 70% { transform: scale(1.5, 1.4); } }
+@keyframes r-tilt { 0%, 100% { transform: rotate(0); } 40%, 70% { transform: rotate(-5deg); } }
+@keyframes r-sway { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-2deg); } 75% { transform: rotate(2deg); } }
+@keyframes r-wave { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(-140deg); } 35% { transform: rotate(-110deg); } 55% { transform: rotate(-145deg); } 75% { transform: rotate(-115deg); } 90% { transform: rotate(-60deg); } }
+@keyframes r-sip { 0%, 100% { transform: rotate(0); } 30%, 65% { transform: rotate(150deg); } }
+@keyframes r-tilt-back { 0%, 100% { transform: rotate(0); } 35%, 60% { transform: rotate(-6deg) translateY(-2px); } }
+@keyframes r-write { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(18deg); } 40% { transform: rotate(8deg); } 60% { transform: rotate(20deg); } 80% { transform: rotate(10deg); } }
+@keyframes r-alert { 0%, 100% { transform: translateX(0) scale(1); } 15% { transform: translateX(-4px) scale(1.03); } 30% { transform: translateX(4px) scale(1.03); } 45% { transform: translateX(-3px); } 60% { transform: translateX(3px); } }
+@keyframes r-wide { 0%, 100% { transform: scaleY(1); } 20%, 70% { transform: scale(1.3); } }
+
+/* ---------- emoji burst ---------- */
+.char-burst {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  font-size: 34px;
+  pointer-events: none;
+  animation: burst 1.3s ease-out both;
+  z-index: 2;
+}
+@keyframes burst {
+  0% { opacity: 0; transform: translate(-50%, 10px) scale(0.5); }
+  25% { opacity: 1; transform: translate(-50%, -8px) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -50px) scale(1); }
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .cf, .cf *, .char-backdrop, .char-backdrop *, .char-burst { animation: none !important; }
+  .char-burst { opacity: 1; transform: translate(-50%, -20px); }
+}
