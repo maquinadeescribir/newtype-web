@@ -11,12 +11,14 @@ function TimerBar({ timer }: { timer: Timer }) {
 
   const value = timer.type === 'stopwatch' ? formatMs(timer.elapsedMs) : formatMs(timer.remainingMs)
   const urgent = timer.type === 'countdown' && timer.status === 'running' && timer.remainingMs < 60000
+  const progress = timer.type === 'countdown' && timer.durationMs > 0 ? Math.max(0, Math.min(1, timer.remainingMs / timer.durationMs)) : 1
   const cls = ['timer-bar', timer.status === 'paused' ? 'paused' : '', timer.status === 'expired' ? 'expired' : '', urgent ? 'urgent' : '']
     .filter(Boolean)
     .join(' ')
 
   return (
     <div className={cls} style={{ borderLeftColor: timer.color }} onClick={() => (timer.status === 'running' ? pauseTimer(timer.id) : resumeTimer(timer.id))}>
+      <span className="timer-bar-fill" style={{ width: `${progress * 100}%`, background: timer.color }} />
       <span className="timer-label">{timer.label}</span>
       <span className="timer-value">{value}</span>
       <button

@@ -508,21 +508,25 @@ export default function MorningTile() {
       {content}
       {activeTimers.length > 0 && (
         <div className="morning-minitimers">
-          {activeTimers.map((t) => (
-            <button
-              key={t.id}
-              className={`mini-timer${t.status === 'paused' ? ' paused' : ''}`}
-              style={{ borderLeftColor: t.color }}
-              onClick={() => (t.status === 'running' ? pauseTimer(t.id) : resumeTimer(t.id))}
-              title={t.status === 'running' ? 'Tap to pause' : 'Tap to resume'}
-            >
-              <span className="mini-timer-label">{t.label}</span>
-              <b className="mini-timer-value">
-                {t.type === 'stopwatch' ? fmtMs(t.elapsedMs) : fmtMs(t.remainingMs)}
-              </b>
-              {t.status === 'paused' && <span className="mini-timer-state">⏸</span>}
-            </button>
-          ))}
+          {activeTimers.map((t) => {
+            const progress = t.type === 'countdown' && t.durationMs > 0 ? Math.max(0, Math.min(1, t.remainingMs / t.durationMs)) : 1
+            return (
+              <button
+                key={t.id}
+                className={`mini-timer${t.status === 'paused' ? ' paused' : ''}`}
+                style={{ borderLeftColor: t.color }}
+                onClick={() => (t.status === 'running' ? pauseTimer(t.id) : resumeTimer(t.id))}
+                title={t.status === 'running' ? 'Tap to pause' : 'Tap to resume'}
+              >
+                <span className="mini-timer-fill" style={{ width: `${progress * 100}%`, background: t.color }} />
+                <span className="mini-timer-label">{t.label}</span>
+                <b className="mini-timer-value">
+                  {t.type === 'stopwatch' ? fmtMs(t.elapsedMs) : fmtMs(t.remainingMs)}
+                </b>
+                {t.status === 'paused' && <span className="mini-timer-state">⏸</span>}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>

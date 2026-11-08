@@ -407,6 +407,8 @@ select {
 }
 
 .timer-bar {
+  position: relative;
+  overflow: hidden;
   flex: 0 0 auto;
   display: flex;
   align-items: center;
@@ -419,6 +421,19 @@ select {
   cursor: pointer;
   transition: opacity 0.15s ease, transform 0.05s ease;
   min-height: 34px;
+}
+.timer-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  opacity: 0.22;
+  transition: width 0.5s linear;
+  z-index: 0;
+}
+.timer-bar > *:not(.timer-bar-fill) {
+  position: relative;
+  z-index: 1;
 }
 
 .timer-bar:active {
@@ -468,18 +483,20 @@ select {
 /* mini active-timer bar (At-a-Glance tile footer) */
 .morning-minitimers {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--border-strong);
 }
 .mini-timer {
-  display: inline-flex;
+  position: relative;
+  overflow: hidden;
+  display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 4px 10px 4px 9px;
-  border-radius: 999px;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
   border: 1px solid var(--border-strong);
   border-left: 3px solid var(--accent);
   background: var(--surface-raised);
@@ -487,6 +504,19 @@ select {
   cursor: pointer;
   max-width: 100%;
   transition: opacity 0.15s ease;
+}
+.mini-timer-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  opacity: 0.2;
+  transition: width 0.5s linear;
+  z-index: 0;
+}
+.mini-timer > *:not(.mini-timer-fill) {
+  position: relative;
+  z-index: 1;
 }
 .mini-timer:active {
   transform: scale(0.98);
