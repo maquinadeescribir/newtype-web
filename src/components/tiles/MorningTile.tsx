@@ -1,6 +1,8 @@
-import { useEffect, useState, type DependencyList } from 'react'
+import { useEffect, useState, type DependencyList, type ReactNode } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import type { transit_realtime } from 'gtfs-realtime-bindings'
+import type { DayPart } from '../../types'
+import DayPartSwitcher from './DayPartSwitcher'
 
 // FR-RT-CC-05/06: countdown to a hard leave time; past zero is a factual "over", not shame.
 function countdownTo(leaveTime: string): { text: string; overdue: boolean } {
@@ -63,9 +65,15 @@ function isRelevantAlert(a: transit_realtime.IAlert): boolean {
 }
 
 // Poll a fetcher on mount and every intervalMs. null result = unavailable (distinct from "no data yet").
-function usePolling<T>(fetcher: () => Promise<T | null>, intervalMs: number, deps: DependencyList = []): T | null {
+function usePolling<T>(
+  fetcher: () => Promise<T | null>,
+  intervalMs: number,
+  deps: DependencyList = [],
+  enabled = true,
+): T | null {
   const [value, setValue] = useState<T | null>(null)
   useEffect(() => {
+    if (!enabled) return
     let cancelled = false
     const run = () => {
       fetcher()
@@ -81,7 +89,7 @@ function usePolling<T>(fetcher: () => Promise<T | null>, intervalMs: number, dep
       clearInterval(t)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps)
+  }, [...deps, enabled])
   return value
 }
 
@@ -92,22 +100,61 @@ function lineShort(line: string): string {
   return line.replace(/ line$/i, '')
 }
 
+const DAY_PART_TITLE: Record<DayPart, string> = {
+  morning: 'Morning',
+  commuteTo: 'In transit → LA',
+  work: 'Work',
+  commuteFrom: 'In transit → home',
+  evening: 'Evening',
+  off: 'Off',
+}
+
+function startOfToday(): number {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+function fmtMs(ms: number): string {
+  const s = Math.max(0, Math.round(ms / 1000))
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+}
+
+function hhmm(at: number): string {
+  return new Date(at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+}
+
+function jumpToTile(type: 'stretch' | 'breathing') {
+  document.querySelector(`.tile-${type}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
 export default function MorningTile() {
-  const routineMode = useAppStore((s) => s.routineMode)
+  const dayPart = useAppStore((s) => s.dayPart)
+  const setDayPart = useAppStore((s) => s.setDayPart)
   const leaveTime = useAppStore((s) => s.leaveTime)
   const checklist = useAppStore((s) => s.checklist)
   const setLeaveTime = useAppStore((s) => s.setLeaveTime)
-  const leaveHouse = useAppStore((s) => s.leaveHouse)
   const toggleChecklistItem = useAppStore((s) => s.toggleChecklistItem)
   const resetChecklist = useAppStore((s) => s.resetChecklist)
-  const setRoutineMode = useAppStore((s) => s.setRoutineMode)
   const mapboxToken = useAppStore((s) => s.mapboxToken)
+  const timers = useAppStore((s) => s.timers)
+  const goals = useAppStore((s) => s.goals)
+  const goodThings = useAppStore((s) => s.goodThings)
+  const log = useAppStore((s) => s.log)
+  const hyperfixation = useAppStore((s) => s.hyperfixation)
+  const hyperfixationItems = useAppStore((s) => s.hyperfixationItems)
 
-  const [now, setNow] = useState(Date.now())
+  const [, setNow] = useState(Date.now())
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(t)
   }, [])
+
+  // Only poll the feeds the active day part actually shows.
+  const wantWeather = dayPart === 'morning'
+  const wantTraffic = dayPart === 'morning' || dayPart === 'commuteFrom'
+  const wantAlerts = dayPart === 'morning' || dayPart === 'commuteTo'
+  const wantBoard = dayPart === 'morning' || dayPart === 'commuteTo' || dayPart === 'commuteFrom'
 
   // FR-RT-CC-01: live weather — poll 15 min (slow-moving data)
   const weather = usePolling<{ temp: string; cond: string }>(
@@ -120,6 +167,8 @@ export default function MorningTile() {
             : null,
         ),
     15 * 60 * 1000,
+    [],
+    wantWeather,
   )
 
   // FR-RT-CC-02: live traffic — poll 5 min; needs the user's Mapbox token
@@ -142,6 +191,7 @@ export default function MorningTile() {
     },
     5 * 60 * 1000,
     [mapboxToken],
+    wantTraffic,
   )
 
   // FR-RT-CC-03: live service alerts — poll 60s
@@ -158,10 +208,15 @@ export default function MorningTile() {
         .map((a) => ({ header: alertEnglish(a.headerText), desc: alertEnglish(a.descriptionText) }))
     },
     60 * 1000,
+    [],
+    wantAlerts,
   )
 
-  // FR-RT-CC-08/09/10: live departure board (train #, ETA, computed delay, cancellations) — poll 60s
-  const [boardDir, setBoardDir] = useState<'toLA' | 'toFullerton'>('toLA')
+  // FR-RT-CC-08/09/10: live departure board — poll 60s. Direction is fixed by day part
+  // (commuteTo → LA, commuteFrom → Fullerton); in Morning the user can still flip it.
+  const [morningDir, setMorningDir] = useState<'toLA' | 'toFullerton'>('toLA')
+  const boardDir: 'toLA' | 'toFullerton' =
+    dayPart === 'commuteFrom' ? 'toFullerton' : dayPart === 'commuteTo' ? 'toLA' : morningDir
   const board = usePolling<BoardRow[]>(
     async () => {
       const r = await fetch(`${PROXY_URL}/metrolink/board?dir=${boardDir}`)
@@ -170,6 +225,7 @@ export default function MorningTile() {
     },
     60 * 1000,
     [boardDir],
+    wantBoard,
   )
 
   const cd = countdownTo(leaveTime)
@@ -178,14 +234,18 @@ export default function MorningTile() {
 
   const boardSection = (
     <div className="morning-board">
-      <button
-        className="morning-board-head morning-board-toggle"
-        onClick={() => setBoardDir((d) => (d === 'toLA' ? 'toFullerton' : 'toLA'))}
-        aria-label="Toggle train direction"
-      >
-        Trains {boardDir === 'toLA' ? '→ LA Union' : '→ Fullerton'}
-        <span className="morning-board-flip">⇄</span>
-      </button>
+      {dayPart === 'morning' ? (
+        <button
+          className="morning-board-head morning-board-toggle"
+          onClick={() => setMorningDir((d) => (d === 'toLA' ? 'toFullerton' : 'toLA'))}
+          aria-label="Toggle train direction"
+        >
+          Trains {boardDir === 'toLA' ? '→ LA Union' : '→ Fullerton'}
+          <span className="morning-board-flip">⇄</span>
+        </button>
+      ) : (
+        <div className="morning-board-head">Trains {boardDir === 'toLA' ? '→ LA Union' : '→ Fullerton'}</div>
+      )}
       {board === null ? (
         <div className="morning-line">
           <span className="morning-dot" /> Status unavailable
@@ -240,88 +300,209 @@ export default function MorningTile() {
     </div>
   )
 
-  return (
-    <div className="tile-body morning-body">
-      {routineMode === 'commuting' ? (
-        <>
-          <div className="morning-mode morning-mode-commute">In transit</div>
-          {boardSection}
-          {alertsSection}
-          <div className="morning-checklist">
-            <div className="morning-checklist-head">
-              <span>Checklist</span>
-              <span className="morning-checklist-count">
-                {doneCount}/{checklist.length}
-              </span>
+  const trafficLine = (
+    <div className="morning-line">
+      <span className="morning-dot" /> Traffic —{' '}
+      {traffic ? <b className={traffic.heavy ? 'morning-late' : ''}>{traffic.live}</b> : <i>—</i>}
+      {traffic && traffic.live !== traffic.typical ? <i> (typ {traffic.typical})</i> : null}
+    </div>
+  )
+
+  const checklistSection = (
+    <div className="morning-checklist">
+      <div className="morning-checklist-head">
+        <span>Checklist</span>
+        <span className="morning-checklist-count">
+          {doneCount}/{checklist.length}
+        </span>
+      </div>
+      <div className="morning-checklist-items">
+        {checklist.map((c) => (
+          <button
+            key={c.id}
+            className={`morning-item${c.done ? ' done' : ''}`}
+            onClick={() => toggleChecklistItem(c.id)}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+      <button className="btn btn-sm morning-reset" onClick={resetChecklist}>
+        Reset
+      </button>
+    </div>
+  )
+
+  let content: ReactNode
+  if (dayPart === 'commuteTo') {
+    content = (
+      <>
+        {boardSection}
+        {alertsSection}
+        <button className="btn btn-sm morning-arrive" onClick={() => setDayPart('work')}>
+          Arrived
+        </button>
+      </>
+    )
+  } else if (dayPart === 'commuteFrom') {
+    content = (
+      <>
+        {boardSection}
+        <div className="morning-status">{trafficLine}</div>
+        <button className="btn btn-sm morning-arrive" onClick={() => setDayPart('evening')}>
+          Home
+        </button>
+      </>
+    )
+  } else if (dayPart === 'work') {
+    const runningTimer = timers.find((t) => t.status === 'running')
+    const topGoals = goals
+      .filter((g) => g.status === 'active')
+      .sort((a, b) => a.priority - b.priority)
+      .slice(0, 3)
+    content = (
+      <div className="dp-sections">
+        <div className="dp-block">
+          <div className="dp-head">Next event</div>
+          {/* No calendar integration yet: the 'nextevent' tile is a mockup, so say so rather than invent one. */}
+          <div className="dp-line dp-muted">No calendar connected</div>
+        </div>
+        <div className="dp-block">
+          <div className="dp-head">Focus</div>
+          {runningTimer ? (
+            <div className="dp-line">
+              {runningTimer.label} <b>{fmtMs(runningTimer.remainingMs)}</b>
             </div>
-            <div className="morning-checklist-items">
-              {checklist.map((c) => (
-                <button
-                  key={c.id}
-                  className={`morning-item${c.done ? ' done' : ''}`}
-                  onClick={() => toggleChecklistItem(c.id)}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-            <button className="btn btn-sm morning-reset" onClick={resetChecklist}>
-              Reset
+          ) : (
+            <div className="dp-line dp-muted">No timer running — start one when you’re ready</div>
+          )}
+        </div>
+        <div className="dp-block">
+          <div className="dp-head">Top goals</div>
+          {topGoals.length === 0 ? (
+            <div className="dp-line dp-muted">No active goals</div>
+          ) : (
+            topGoals.map((g) => (
+              <div key={g.id} className="dp-line">
+                {g.title}
+              </div>
+            ))
+          )}
+        </div>
+        <div className="dp-block">
+          <div className="dp-head">Break</div>
+          <div className="dp-actions">
+            <button className="btn btn-sm" onClick={() => jumpToTile('stretch')}>
+              Stretch
+            </button>
+            <button className="btn btn-sm" onClick={() => jumpToTile('breathing')}>
+              Breathe
             </button>
           </div>
-          <button className="btn btn-sm morning-arrive" onClick={() => setRoutineMode('preparing')}>
-            Arrived
-          </button>
-        </>
-      ) : (
-        <>
-          <div className="morning-count">
-            <span className="morning-count-label">Leave in</span>
-            <b className={cd.overdue ? 'morning-overdue' : ''}>{cd.overdue ? `${cd.text} over` : cd.text}</b>
-            <input
-              type="time"
-              className="morning-time-input"
-              value={leaveTime}
-              onChange={(e) => setLeaveTime(e.target.value)}
-              aria-label="Leave time"
-            />
+        </div>
+      </div>
+    )
+  } else if (dayPart === 'evening') {
+    const since = startOfToday()
+    const todayGood = goodThings.filter((g) => g.at >= since)
+    const shownGood = (todayGood.length > 0 ? todayGood : goodThings).slice(0, 3)
+    const todayLog = log.filter((e) => e.at >= since)
+    content = (
+      <div className="dp-sections">
+        <div className="dp-block">
+          <div className="dp-head">Good things{todayGood.length > 0 ? ' today' : ''}</div>
+          {shownGood.length === 0 ? (
+            <div className="dp-line dp-muted">Nothing logged yet</div>
+          ) : (
+            shownGood.map((g) => (
+              <div key={g.id} className="dp-line">
+                {g.text}
+              </div>
+            ))
+          )}
+        </div>
+        <div className="dp-block">
+          <div className="dp-head">Day recap</div>
+          <div className="dp-line">
+            {todayLog.length} {todayLog.length === 1 ? 'event' : 'events'} logged
           </div>
-          <div className="morning-status">
-            <div className="morning-line">
-              <span className="morning-dot" /> Weather — {weather ? <b>{weather.temp} {weather.cond}</b> : <i>—</i>}
+          {todayLog.slice(0, 3).map((e) => (
+            <div key={e.id} className="dp-line dp-muted">
+              {hhmm(e.at)} · {e.text}
             </div>
-            <div className="morning-line">
-              <span className="morning-dot" /> Traffic —{' '}
-              {traffic ? <b className={traffic.heavy ? 'morning-late' : ''}>{traffic.live}</b> : <i>—</i>}
-              {traffic && traffic.live !== traffic.typical ? <i> (typ {traffic.typical})</i> : null}
+          ))}
+        </div>
+        <div className="dp-block">
+          <div className="dp-head">Wind-down</div>
+          <div className="dp-line dp-muted">Work is done. Dim the lights, slow down — tomorrow can wait.</div>
+        </div>
+      </div>
+    )
+  } else if (dayPart === 'off') {
+    content = (
+      <div className="dp-sections">
+        <div className="dp-block">
+          <div className="dp-head">Current topic</div>
+          {hyperfixation ? (
+            <div className="dp-line">
+              <b>{hyperfixation.topic}</b>
             </div>
+          ) : (
+            <div className="dp-line dp-muted">No topic picked</div>
+          )}
+          {hyperfixationItems.slice(0, 3).map((i) => (
+            <div key={i.id} className="dp-line dp-muted">
+              {i.url ? (
+                <a href={i.url} target="_blank" rel="noreferrer">
+                  {i.text}
+                </a>
+              ) : (
+                i.text
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="dp-block">
+          <div className="dp-head">Leisure</div>
+          <div className="dp-line dp-muted">Nothing scheduled. No work, no commute.</div>
+        </div>
+      </div>
+    )
+  } else {
+    content = (
+      <>
+        <div className="morning-count">
+          <span className="morning-count-label">Leave in</span>
+          <b className={cd.overdue ? 'morning-overdue' : ''}>{cd.overdue ? `${cd.text} over` : cd.text}</b>
+          <input
+            type="time"
+            className="morning-time-input"
+            value={leaveTime}
+            onChange={(e) => setLeaveTime(e.target.value)}
+            aria-label="Leave time"
+          />
+        </div>
+        <div className="morning-status">
+          <div className="morning-line">
+            <span className="morning-dot" /> Weather — {weather ? <b>{weather.temp} {weather.cond}</b> : <i>—</i>}
           </div>
-          {boardSection}
-          {alertsSection}
-          <button className="btn btn-primary btn-sm morning-leave" onClick={leaveHouse}>
-            Leaving house
-          </button>
-          <div className="morning-checklist">
-            <div className="morning-checklist-head">
-              <span>Checklist</span>
-              <span className="morning-checklist-count">
-                {doneCount}/{checklist.length}
-              </span>
-            </div>
-            <div className="morning-checklist-items">
-              {checklist.map((c) => (
-                <button
-                  key={c.id}
-                  className={`morning-item${c.done ? ' done' : ''}`}
-                  onClick={() => toggleChecklistItem(c.id)}
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+          {trafficLine}
+        </div>
+        {boardSection}
+        {alertsSection}
+        <button className="btn btn-primary btn-sm morning-leave" onClick={() => setDayPart('commuteTo')}>
+          Leaving house
+        </button>
+        {checklistSection}
+      </>
+    )
+  }
+
+  return (
+    <div className="tile-body morning-body" data-daypart={dayPart}>
+      <DayPartSwitcher />
+      <div className="morning-mode">{DAY_PART_TITLE[dayPart]}</div>
+      {content}
     </div>
   )
 }
