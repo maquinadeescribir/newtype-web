@@ -18,10 +18,10 @@ import type {
   BodyEntry,
   FoodEntry,
   WeightEntry,
-  RoutineMode,
+  DayPart,
   ChecklistItem,
 } from '../types'
-import { TILE_META } from '../types'
+import { TILE_META, LEGACY_ROUTINE_TO_DAYPART } from '../types'
 import { TIMER_COLORS } from '../constants/theme'
 import { defaultLayout } from '../constants/defaultLayout'
 import { SEED_INFLUENCERS } from '../data/community'
@@ -172,12 +172,11 @@ interface AppStore {
   lastActivityAt: number | null
   setLastActivity: (text: string) => void
 
-  routineMode: RoutineMode
+  dayPart: DayPart
   leaveTime: string
   checklist: ChecklistItem[]
-  setRoutineMode: (m: RoutineMode) => void
+  setDayPart: (d: DayPart) => void
   setLeaveTime: (t: string) => void
-  leaveHouse: () => void
   toggleChecklistItem: (id: string) => void
   resetChecklist: () => void
 
@@ -584,18 +583,14 @@ export const useAppStore = create<AppStore>()(
       lastActivityAt: null,
       setLastActivity: (text) => set({ lastActivity: text, lastActivityAt: Date.now() }),
 
-      routineMode: 'preparing',
+      dayPart: 'morning',
       leaveTime: '06:30',
       checklist: DEFAULT_CHECKLIST,
-      setRoutineMode: (m) => {
-        set({ routineMode: m })
-        get().logEvent('app', `Routine: ${m}`)
+      setDayPart: (d) => {
+        set({ dayPart: d })
+        get().logEvent('app', `Day part: ${d}`)
       },
       setLeaveTime: (t) => set({ leaveTime: t }),
-      leaveHouse: () => {
-        set({ routineMode: 'commuting' })
-        get().logEvent('app', 'Leaving house')
-      },
       toggleChecklistItem: (id) => {
         set({ checklist: get().checklist.map((c) => (c.id === id ? { ...c, done: !c.done } : c)) })
       },
@@ -610,9 +605,20 @@ export const useAppStore = create<AppStore>()(
     }),
     {
       name: 'saw-state',
-      version: 9,
+      version: 10,
       migrate: (persisted, version) => {
-        const p = persisted as { tiles?: TileConfig[] } | undefined
+        const p = persisted as { tiles?: TileConfig[]; routineMode?: string; dayPart?: DayPart } | undefined
+        if (p && (version as number) >= 1 && (version as number) < 10 && p.routineMode !== undefined) {
+          // v10: routineMode -> dayPart (returning users keep working state)
+          const { routineMode, ...rest } = p
+          const mapped = { ...rest, dayPart: LEGACY_ROUTINE_TO_DAYPART[routineMode] ?? 'morning' }
+          if ((version as number) < 9) {
+            const saved = mapped.tiles ?? []
+            const have = new Set(saved.map((t) => t.type))
+            return { ...mapped, tiles: [...saved, ...defaultLayout.filter((t) => !have.has(t.type))] } as any
+          }
+          return mapped as any
+        }
         if (!p || (version as number) < 1) {
           // v0: stale positions overlap the full-width character → full reset
           return { ...(p ?? {}), tiles: defaultLayout } as any
@@ -656,7 +662,7 @@ export const useAppStore = create<AppStore>()(
         scrollCoolDownMin: s.scrollCoolDownMin,
         lastActivity: s.lastActivity,
         lastActivityAt: s.lastActivityAt,
-        routineMode: s.routineMode,
+        dayPart: s.dayPart,
         leaveTime: s.leaveTime,
         checklist: s.checklist,
         mapboxToken: s.mapboxToken,
