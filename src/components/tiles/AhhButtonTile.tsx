@@ -10,6 +10,7 @@ const ANIM_MS = 5600
 export default function AhhButtonTile() {
   const createTimer = useAppStore((s) => s.createTimer)
   const speak = useAppStore((s) => s.speak)
+  const logEvent = useAppStore((s) => s.logEvent)
   const [stage, setStage] = useState<Stage>('closed')
   const [archetype, setArchetype] = useState<string | null>(null)
 
@@ -22,6 +23,7 @@ export default function AhhButtonTile() {
   function pick(id: string) {
     setArchetype(id)
     setStage('anim')
+    logEvent('app', `AHH: ${id}`)
   }
 
   function close() {

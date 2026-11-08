@@ -457,6 +457,7 @@ export const useAppStore = create<AppStore>()(
       addWater: () => {
         const k = todayKey()
         set({ waterLog: { ...get().waterLog, [k]: (get().waterLog[k] ?? 0) + 1 } })
+        get().logEvent('app', 'Water logged')
       },
       removeWater: () => {
         const k = todayKey()
@@ -510,6 +511,7 @@ export const useAppStore = create<AppStore>()(
       addCoffee: () => {
         const k = todayKey()
         set({ coffeeLog: { ...get().coffeeLog, [k]: (get().coffeeLog[k] ?? 0) + 1 } })
+        get().logEvent('app', 'Coffee logged')
       },
       removeCoffee: () => {
         const k = todayKey()
@@ -592,6 +594,8 @@ export const useAppStore = create<AppStore>()(
       },
       setLeaveTime: (t) => set({ leaveTime: t }),
       toggleChecklistItem: (id) => {
+        const item = get().checklist.find((c) => c.id === id)
+        if (item) get().logEvent('app', `Checklist ${item.done ? 'unchecked' : 'done'}: ${item.label}`)
         set({ checklist: get().checklist.map((c) => (c.id === id ? { ...c, done: !c.done } : c)) })
       },
       resetChecklist: () => set({ checklist: DEFAULT_CHECKLIST.map((c) => ({ ...c, done: false })) }),
