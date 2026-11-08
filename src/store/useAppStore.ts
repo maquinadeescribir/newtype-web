@@ -29,6 +29,7 @@ import { SEED_RESOURCES } from '../data/resources'
 import { SEED_GOOD_DEEDS } from '../data/goodDeeds'
 import { HYPERFIXATION_TOPICS } from '../data/hyperfixations'
 import { uid, tileRows, todayKey } from '../lib/util'
+import { notifyTimerDone } from '../lib/notify'
 import { envIndex, type EnvReading } from '../data/env'
 
 let timerColorIndex = 0
@@ -290,6 +291,7 @@ export const useAppStore = create<AppStore>()(
       tickTimers: (now) => {
         const timers = get().timers
         let changed = false
+        const expired: string[] = []
         const next = timers.map((t) => {
           if (t.status !== 'running') return t
           const delta = Math.max(0, now - t.lastTickAt)
@@ -297,7 +299,7 @@ export const useAppStore = create<AppStore>()(
             const remainingMs = t.remainingMs - delta
             changed = true
             if (remainingMs <= 0) {
-              get().logEvent('timer', `Timer done: ${t.label}`)
+              expired.push(t.label)
               return { ...t, remainingMs: 0, lastTickAt: now, status: 'expired' as const }
             }
             return { ...t, remainingMs, lastTickAt: now }
@@ -306,6 +308,11 @@ export const useAppStore = create<AppStore>()(
           return { ...t, elapsedMs: t.elapsedMs + delta, lastTickAt: now }
         })
         if (changed) set({ timers: next })
+        for (const label of expired) {
+          get().logEvent('timer', `Timer done: ${label}`)
+          get().speak(`Timer done: ${label}`)
+          notifyTimerDone(label)
+        }
       },
 
       medications: [],
