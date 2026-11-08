@@ -2999,3 +2999,31 @@ a.hf-item-text:hover {
 .dp-line a { color: inherit; text-decoration: underline; }
 .dp-muted { color: var(--text-muted); }
 .dp-actions { display: flex; gap: 6px; }
+
+/* Body-double day-part scene badge (FR-DP-02) */
+.char-scene[data-daypart] { box-shadow: inset 0 0 0 2px var(--scene-accent, transparent); }
+.char-scene[data-daypart]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 100%, var(--scene-accent, transparent) 0%, transparent 60%);
+  opacity: 0.14;
+}
+.char-daypart {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #fff;
+  background: rgba(10, 13, 20, 0.62);
+  border: 1px solid var(--scene-accent, var(--border));
+  border-radius: 999px;
+  pointer-events: none;
+}
+.char-daypart-emoji { font-size: 15px; }

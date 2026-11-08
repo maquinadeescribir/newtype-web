@@ -1,9 +1,21 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { buildResponse } from '../../services/dialogue'
+import type { DayPart } from '../../types'
+
+// FR-DP-02: per-day-part body-double scene (v1: emoji + label + accent, layered over the art).
+const DAY_PART_SCENE: Record<DayPart, { emoji: string; label: string; accent: string }> = {
+  morning: { emoji: '☕', label: 'getting ready', accent: '#ffb347' },
+  commuteTo: { emoji: '🚆', label: 'on the train', accent: '#4fc3f7' },
+  work: { emoji: '💼', label: 'focus', accent: '#81c784' },
+  commuteFrom: { emoji: '🚆', label: 'heading home', accent: '#ba68c8' },
+  evening: { emoji: '🛋️', label: 'winding down', accent: '#ff8a65' },
+  off: { emoji: '🌿', label: 'off duty', accent: '#a5d6a7' },
+}
 
 export default function CharacterTile() {
   const characterState = useAppStore((s) => s.characterState)
+  const dayPart = useAppStore((s) => s.dayPart)
   const characterSpeech = useAppStore((s) => s.characterSpeech)
   const setCharacterState = useAppStore((s) => s.setCharacterState)
   const speak = useAppStore((s) => s.speak)
@@ -68,7 +80,11 @@ export default function CharacterTile() {
   }
 
   return (
-    <div className="char-scene">
+    <div
+      className="char-scene"
+      data-daypart={dayPart}
+      style={{ '--scene-accent': DAY_PART_SCENE[dayPart].accent } as CSSProperties}
+    >
       <img
         className="char-art"
         data-state={effectiveState}
@@ -76,6 +92,12 @@ export default function CharacterTile() {
         alt="Lofi office companion seated at a desk, with city and mountains visible through the windows"
       />
       <div className="char-vignette" aria-hidden="true" />
+      <div className="char-daypart" role="status" aria-label={`Scene: ${DAY_PART_SCENE[dayPart].label}`}>
+        <span className="char-daypart-emoji" aria-hidden="true">
+          {DAY_PART_SCENE[dayPart].emoji}
+        </span>
+        <span>{DAY_PART_SCENE[dayPart].label}</span>
+      </div>
 
       {characterSpeech && <div className="char-speech">{characterSpeech}</div>}
 
