@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { buildResponse } from '../../services/dialogue'
 import type { DayPart } from '../../types'
-import Scene from '../character/scenes'
+import { bodyDoubleScenes } from '../character/art/openai-scenes'
 import { useReaction } from '../character/useReaction'
 import { REACTION_BURST } from '../character/reactions'
 import '../character/character.css'
@@ -93,7 +93,10 @@ export default function CharacterTile() {
       data-reaction={reaction ?? 'none'}
       style={{ '--scene-accent': DAY_PART_SCENE[dayPart].accent } as CSSProperties}
     >
-      <Scene dayPart={dayPart} />
+      {(() => {
+        const Scene = bodyDoubleScenes[dayPart]
+        return <Scene />
+      })()}
       {reaction && (
         <span key={seq} className="char-burst" aria-hidden="true">
           {REACTION_BURST[reaction]}
