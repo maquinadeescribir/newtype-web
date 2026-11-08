@@ -29,8 +29,8 @@ export function buildResponse(input: string, ctx: DialogueContext): DialogueResu
       if (unit.startsWith('sec')) durationMin = Math.max(1, Math.round(durationMin / 60))
       const labelMatch = input.match(/(?:called|for|timer for)\s+(.+)$/i)
       const label = labelMatch ? labelMatch[1].trim().replace(/[.?!]+$/g, '') : 'focus'
-      if (ctx.timers.length >= 3) {
-        return { text: 'Three timers already running. Clear one first.' }
+      if (ctx.timers.filter((t) => t.status !== 'expired').length >= 12) {
+        return { text: 'Too many timers running. Clear some first.' }
       }
       return { text: `${durationMin} minute timer started for ${label}.`, action: 'timer', durationMin, label }
     }

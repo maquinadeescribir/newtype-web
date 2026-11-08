@@ -403,10 +403,11 @@ select {
   gap: 7px;
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
 }
 
 .timer-bar {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;

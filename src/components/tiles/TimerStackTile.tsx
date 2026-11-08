@@ -41,7 +41,7 @@ export default function TimerStackTile() {
   const [label, setLabel] = useState('')
   const [minutes, setMinutes] = useState(25)
 
-  const atCap = timers.length >= 3
+  const atCap = timers.filter((t) => t.status !== 'expired').length >= 12
 
   function startCountdown() {
     const name = label.trim() || 'focus'
