@@ -138,6 +138,8 @@ export default function MorningTile() {
   const resetChecklist = useAppStore((s) => s.resetChecklist)
   const mapboxToken = useAppStore((s) => s.mapboxToken)
   const timers = useAppStore((s) => s.timers)
+  const pauseTimer = useAppStore((s) => s.pauseTimer)
+  const resumeTimer = useAppStore((s) => s.resumeTimer)
   const goals = useAppStore((s) => s.goals)
   const goodThings = useAppStore((s) => s.goodThings)
   const log = useAppStore((s) => s.log)
@@ -231,6 +233,7 @@ export default function MorningTile() {
   const cd = countdownTo(leaveTime)
   const doneCount = checklist.filter((c) => c.done).length
   const alertCount = metrolinkAlerts?.length ?? 0
+  const activeTimers = timers.filter((t) => t.status === 'running' || t.status === 'paused')
 
   const boardSection = (
     <div className="morning-board">
@@ -503,6 +506,25 @@ export default function MorningTile() {
       <DayPartSwitcher />
       <div className="morning-mode">{DAY_PART_TITLE[dayPart]}</div>
       {content}
+      {activeTimers.length > 0 && (
+        <div className="morning-minitimers">
+          {activeTimers.map((t) => (
+            <button
+              key={t.id}
+              className={`mini-timer${t.status === 'paused' ? ' paused' : ''}`}
+              style={{ borderLeftColor: t.color }}
+              onClick={() => (t.status === 'running' ? pauseTimer(t.id) : resumeTimer(t.id))}
+              title={t.status === 'running' ? 'Tap to pause' : 'Tap to resume'}
+            >
+              <span className="mini-timer-label">{t.label}</span>
+              <b className="mini-timer-value">
+                {t.type === 'stopwatch' ? fmtMs(t.elapsedMs) : fmtMs(t.remainingMs)}
+              </b>
+              {t.status === 'paused' && <span className="mini-timer-state">⏸</span>}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
