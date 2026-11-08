@@ -252,7 +252,14 @@ export const TILE_META: Record<TileType, { label: string; defaultSize: TileSize;
 
 export const ALL_TILE_TYPES = Object.keys(TILE_META) as TileType[]
 
-export type RoutineMode = 'off' | 'preparing' | 'commuting'
+export type DayPart = 'morning' | 'commuteTo' | 'work' | 'commuteFrom' | 'evening' | 'off'
+
+// Legacy (pre-v10) routineMode values → day part, used by the store migration.
+export const LEGACY_ROUTINE_TO_DAYPART: Record<string, DayPart> = {
+  preparing: 'morning',
+  commuting: 'commuteTo',
+  off: 'off',
+}
 
 export interface ChecklistItem {
   id: string
