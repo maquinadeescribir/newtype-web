@@ -63,6 +63,18 @@ const TRAFFIC_COORDS = '-117.9248,33.8703;-118.2355,34.0562'
 // Backend proxy (Cloudflare Worker) — holds Metrolink's secret key, returns CORS JSON.
 const PROXY_URL = 'https://saw-proxy.neurospicyass.workers.dev'
 
+interface ShuttleData {
+  vehicles: Array<{ name: string; lat: number; lon: number; seconds: number | null; onRoute: boolean }>
+  stops: Array<{
+    name: string
+    etaSeconds: number | null
+    etaText: string | null
+    arriving: boolean
+    departed: boolean
+    distanceKm: number | null
+  }>
+}
+
 function alertEnglish(ts: { translation?: Array<{ text?: string }> | null } | null | undefined): string {
   return ts?.translation?.[0]?.text ?? ''
 }
@@ -267,6 +279,36 @@ export default function MorningTile() {
     setMetroConfig({ [metroLegKey]: { ...metroLeg, lines: next } })
   }
 
+  // Private shuttle (City National Plaza ↔ Union Station) — Worker proxies Ride Systems; poll 20s.
+  const wantShuttle = dayPart === 'commuteTo' || dayPart === 'commuteFrom'
+  const shuttle = usePolling<ShuttleData>(
+    async () => {
+      const r = await fetch(`${PROXY_URL}/shuttle`)
+      const d = await r.json()
+      return Array.isArray(d?.vehicles) && Array.isArray(d?.stops) ? d : null
+    },
+    20 * 1000,
+    [],
+    wantShuttle,
+  )
+  const shuttleStopName = dayPart === 'commuteFrom' ? 'City National Plaza' : 'Union Station'
+  const shuttleStopShort = dayPart === 'commuteFrom' ? 'CNP' : 'Union'
+  const shuttleStop = shuttle?.stops.find((st) => st.name === shuttleStopName)
+  const shuttleBus = shuttle?.vehicles[0]
+  const shuttleLine = shuttle ? (
+    <div className="morning-line">
+      Shuttle — {shuttleBus?.name ?? 'no bus'} ·{' '}
+      {shuttleStop?.arriving
+        ? `Arriving at ${shuttleStopShort}`
+        : shuttleStop?.etaText
+          ? /min/i.test(shuttleStop.etaText)
+            ? `${shuttleStop.etaText} to ${shuttleStopShort}`
+            : shuttleStop.etaText
+          : 'no ETA'}
+      {shuttleStop?.distanceKm != null ? ` · ${shuttleStop.distanceKm.toFixed(1)} km` : ''}
+    </div>
+  ) : null
+
   const cd = countdownTo(leaveTime)
   const doneCount = checklist.filter((c) => c.done).length
   const alertCount = metrolinkAlerts?.length ?? 0
@@ -458,6 +500,7 @@ export default function MorningTile() {
       <>
         {boardSection}
         {metroSection}
+        {shuttleLine}
         {alertsSection}
         <button className="btn btn-sm morning-arrive" onClick={() => setDayPart('work')}>
           Arrived
@@ -469,6 +512,7 @@ export default function MorningTile() {
       <>
         {boardSection}
         {metroSection}
+        {shuttleLine}
         <div className="morning-status">{trafficLine}</div>
         <button className="btn btn-sm morning-arrive" onClick={() => setDayPart('evening')}>
           Home
