@@ -240,18 +240,32 @@ export default function MorningTile() {
     wantBoard,
   )
 
-  // LA Metro rail at Union Station (Swiftly via the Worker, which caches ~45s) — poll 60s.
-  const wantMetro = dayPart === 'commuteTo' || dayPart === 'work'
+  // LA Metro rail (Swiftly via the Worker, which caches ~45s) — poll 60s. Direction-aware:
+  // commuteFrom uses the toHome config; commuteTo + work use toWork.
+  const wantMetro = dayPart === 'commuteTo' || dayPart === 'work' || dayPart === 'commuteFrom'
+  const metroConfig = useAppStore((s) => s.metroConfig)
+  const setMetroConfig = useAppStore((s) => s.setMetroConfig)
+  const metroLegKey: 'toWork' | 'toHome' = dayPart === 'commuteFrom' ? 'toHome' : 'toWork'
+  const metroLeg = metroConfig[metroLegKey]
+  const metroLines = metroLeg.lines.join(',')
+  const [metroEditing, setMetroEditing] = useState(false)
   const metro = usePolling<MetroRow[]>(
     async () => {
-      const r = await fetch(`${PROXY_URL}/lametro/board`)
+      const r = await fetch(`${PROXY_URL}/lametro/board?station=${metroLeg.station}&lines=${metroLines}`)
       const d = await r.json()
       return Array.isArray(d?.board) ? d.board : null
     },
     60 * 1000,
-    [],
+    [metroLeg.station, metroLines],
     wantMetro,
   )
+  const metroStationLabel = metroLeg.station === '7th' ? '7th St / Metro Center' : 'Union Station'
+  const toggleMetroLine = (ln: string) => {
+    const has = metroLeg.lines.includes(ln)
+    const next = has ? metroLeg.lines.filter((x) => x !== ln) : [...metroLeg.lines, ln].sort()
+    if (next.length === 0) return // keep at least one line
+    setMetroConfig({ [metroLegKey]: { ...metroLeg, lines: next } })
+  }
 
   const cd = countdownTo(leaveTime)
   const doneCount = checklist.filter((c) => c.done).length
@@ -307,7 +321,47 @@ export default function MorningTile() {
 
   const metroSection = (
     <div className="morning-board metro-board">
-      <div className="morning-board-head">Metro rail · Union Station</div>
+      <div className="morning-board-head">
+        Metro · {metroStationLabel} · {metroLeg.lines.join(',')}
+        <button
+          className="metro-edit"
+          aria-label="Edit metro stop and lines"
+          title="Edit stop and lines"
+          onClick={() => setMetroEditing((v) => !v)}
+        >
+          ✎
+        </button>
+      </div>
+      {metroEditing && (
+        <div className="metro-editor">
+          <div className="metro-editor-row">
+            <span className="metro-editor-label">{metroLegKey === 'toHome' ? 'Heading home' : 'Heading to work'}</span>
+          </div>
+          <div className="metro-editor-row">
+            {(['union', '7th'] as const).map((st) => (
+              <button
+                key={st}
+                className={`btn btn-sm metro-chip${metroLeg.station === st ? ' active' : ''}`}
+                onClick={() => setMetroConfig({ [metroLegKey]: { ...metroLeg, station: st } })}
+              >
+                {st === 'union' ? 'Union' : '7th St'}
+              </button>
+            ))}
+          </div>
+          <div className="metro-editor-row">
+            {['A', 'B', 'D', 'E'].map((ln) => (
+              <button
+                key={ln}
+                className={`btn btn-sm metro-chip${metroLeg.lines.includes(ln) ? ' active' : ''}`}
+                aria-pressed={metroLeg.lines.includes(ln)}
+                onClick={() => toggleMetroLine(ln)}
+              >
+                {ln}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {metro === null ? (
         <div className="morning-line">
           <span className="morning-dot" /> Status unavailable
@@ -414,6 +468,7 @@ export default function MorningTile() {
     content = (
       <>
         {boardSection}
+        {metroSection}
         <div className="morning-status">{trafficLine}</div>
         <button className="btn btn-sm morning-arrive" onClick={() => setDayPart('evening')}>
           Home

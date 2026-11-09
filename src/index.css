@@ -3061,6 +3061,26 @@ a.hf-item-text:hover {
   margin-left: 0;
   white-space: nowrap;
 }
+.metro-edit {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 4px;
+  margin-left: 4px;
+}
+.metro-edit:hover { opacity: 1; }
+.metro-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.metro-editor-row { display: flex; gap: 4px; align-items: center; }
+.metro-editor-label { font-size: 11px; opacity: 0.6; }
+.metro-chip.active { outline: 2px solid currentColor; font-weight: 600; }
 
 /* Day-part switcher (FR-DP-04) */
 .daypart-switcher {

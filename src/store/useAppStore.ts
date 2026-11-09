@@ -34,6 +34,20 @@ import { envIndex, type EnvReading } from '../data/env'
 
 let timerColorIndex = 0
 
+export type MetroStation = 'union' | '7th'
+export interface MetroLegConfig {
+  station: MetroStation
+  lines: string[]
+}
+export interface MetroConfig {
+  toWork: MetroLegConfig
+  toHome: MetroLegConfig
+}
+export const DEFAULT_METRO_CONFIG: MetroConfig = {
+  toWork: { station: 'union', lines: ['A', 'D'] },
+  toHome: { station: '7th', lines: ['A', 'D'] },
+}
+
 const DEFAULT_CHECKLIST: ChecklistItem[] = [
   'badge', 'phone', 'keys', 'wallet', 'coffee', 'lunch', 'computer', 'headphones', 'glasses', 'sunnies', 'mask',
 ].map((label) => ({ id: label, label, done: false }))
@@ -183,6 +197,9 @@ interface AppStore {
 
   mapboxToken: string
   setMapboxToken: (t: string) => void
+
+  metroConfig: MetroConfig
+  setMetroConfig: (patch: Partial<MetroConfig>) => void
 
   scrollOverlayOpen: boolean
   openScrollOverlay: () => void
@@ -610,6 +627,9 @@ export const useAppStore = create<AppStore>()(
       mapboxToken: '',
       setMapboxToken: (t) => set({ mapboxToken: t }),
 
+      metroConfig: DEFAULT_METRO_CONFIG,
+      setMetroConfig: (patch) => set({ metroConfig: { ...get().metroConfig, ...patch } }),
+
       scrollOverlayOpen: false,
       openScrollOverlay: () => set({ scrollOverlayOpen: true }),
       closeScrollOverlay: () => set({ scrollOverlayOpen: false }),
@@ -677,6 +697,7 @@ export const useAppStore = create<AppStore>()(
         leaveTime: s.leaveTime,
         checklist: s.checklist,
         mapboxToken: s.mapboxToken,
+        metroConfig: s.metroConfig,
       }),
     },
   ),
