@@ -45,6 +45,16 @@ type BoardRow = {
   status: 'cancelled' | 'no_live' | 'late' | 'on_time'
 }
 
+interface MetroRow {
+  route: string
+  line: string
+  dest: string
+  sched: string
+  eta: string | null
+  delayMin: number | null
+  status: 'cancelled' | 'no_live' | 'late' | 'on_time'
+}
+
 // Metrolink GTFS-RT service alerts — keyless + CORS-open (Appendix A §12.6)
 const ALERTS_URL = 'https://cdn.simplifytransit.com/metrolink/alerts/service-alerts.pb'
 const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=33.87&longitude=-117.92&current_weather=true'
@@ -230,6 +240,19 @@ export default function MorningTile() {
     wantBoard,
   )
 
+  // LA Metro rail at Union Station (Swiftly via the Worker, which caches ~45s) — poll 60s.
+  const wantMetro = dayPart === 'commuteTo' || dayPart === 'work'
+  const metro = usePolling<MetroRow[]>(
+    async () => {
+      const r = await fetch(`${PROXY_URL}/lametro/board`)
+      const d = await r.json()
+      return Array.isArray(d?.board) ? d.board : null
+    },
+    60 * 1000,
+    [],
+    wantMetro,
+  )
+
   const cd = countdownTo(leaveTime)
   const doneCount = checklist.filter((c) => c.done).length
   const alertCount = metrolinkAlerts?.length ?? 0
@@ -273,6 +296,45 @@ export default function MorningTile() {
                 <span className="morning-board-train">{row.train}</span>
                 <span className="morning-board-line">{lineShort(row.line)}</span>
                 <span className="morning-board-time">{row.eta ?? row.sched}</span>
+                <span className={`morning-board-status ${st.c}`}>{st.t}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+
+  const metroSection = (
+    <div className="morning-board metro-board">
+      <div className="morning-board-head">Metro rail · Union Station</div>
+      {metro === null ? (
+        <div className="morning-line">
+          <span className="morning-dot" /> Status unavailable
+        </div>
+      ) : metro.length === 0 ? (
+        <div className="morning-line">
+          <span className="morning-dot" /> No upcoming trains
+        </div>
+      ) : (
+        <div className="morning-board-list">
+          {metro.slice(0, 5).map((row) => {
+            const st =
+              row.status === 'cancelled'
+                ? { t: 'CANCELLED', c: 'morning-cancelled' }
+                : row.status === 'late'
+                  ? { t: `${row.delayMin}m late`, c: 'morning-late' }
+                  : row.status === 'on_time'
+                    ? { t: 'on time', c: 'morning-ok' }
+                    : { t: '—', c: 'morning-muted' }
+            return (
+              <div key={row.route + row.dest + row.sched} className="morning-board-row" title={`${row.line} → ${row.dest}`}>
+                <span className="morning-board-train metro-line">{row.line.replace(/ line$/i, '')}</span>
+                <span className="morning-board-line metro-dest">{row.dest.replace(/ station$/i, '')}</span>
+                <span className="morning-board-time">
+                  {row.eta ?? row.sched}
+                  {row.eta && row.eta !== row.sched ? <i className="metro-sched"> ({row.sched})</i> : null}
+                </span>
                 <span className={`morning-board-status ${st.c}`}>{st.t}</span>
               </div>
             )
@@ -341,6 +403,7 @@ export default function MorningTile() {
     content = (
       <>
         {boardSection}
+        {metroSection}
         {alertsSection}
         <button className="btn btn-sm morning-arrive" onClick={() => setDayPart('work')}>
           Arrived
@@ -370,6 +433,7 @@ export default function MorningTile() {
           {/* No calendar integration yet: the 'nextevent' tile is a mockup, so say so rather than invent one. */}
           <div className="dp-line dp-muted">No calendar connected</div>
         </div>
+        <div className="dp-block">{metroSection}</div>
         <div className="dp-block">
           <div className="dp-head">Focus</div>
           {runningTimer ? (

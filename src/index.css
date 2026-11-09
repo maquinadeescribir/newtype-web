@@ -3042,6 +3042,26 @@ a.hf-item-text:hover {
   opacity: 0.5;
 }
 
+/* LA Metro rail board — reuses .morning-board-* rows */
+.metro-board .metro-line {
+  min-width: 18px;
+}
+.metro-board .metro-dest {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.metro-board .metro-sched {
+  opacity: 0.5;
+  font-size: 11px;
+}
+.metro-board .morning-board-status {
+  margin-left: 0;
+  white-space: nowrap;
+}
+
 /* Day-part switcher (FR-DP-04) */
 .daypart-switcher {
   display: flex;
