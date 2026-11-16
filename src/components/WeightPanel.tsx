@@ -21,10 +21,11 @@ function sparkPoints(values: number[]): string {
 export default function WeightPanel() {
   const weightEntries = useAppStore((s) => s.weightEntries)
   const addWeight = useAppStore((s) => s.addWeight)
+  const units = useAppStore((s) => s.units)
   const deleteWeight = useAppStore((s) => s.deleteWeight)
   const setActivePanel = useAppStore((s) => s.setActivePanel)
   const [value, setValue] = useState('')
-  const [unit, setUnit] = useState<'lb' | 'kg'>('lb')
+  const [unit, setUnit] = useState<'lb' | 'kg'>(units === 'metric' ? 'kg' : 'lb')
 
   function add() {
     const n = parseFloat(value)

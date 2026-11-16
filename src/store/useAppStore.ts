@@ -201,6 +201,11 @@ interface AppStore {
   metroConfig: MetroConfig
   setMetroConfig: (patch: Partial<MetroConfig>) => void
 
+  units: 'imperial' | 'metric'
+  setUnits: (u: 'imperial' | 'metric') => void
+  orientation: 'horizontal' | 'vertical'
+  setOrientation: (o: 'horizontal' | 'vertical') => void
+
   scrollOverlayOpen: boolean
   openScrollOverlay: () => void
   closeScrollOverlay: () => void
@@ -630,6 +635,11 @@ export const useAppStore = create<AppStore>()(
       metroConfig: DEFAULT_METRO_CONFIG,
       setMetroConfig: (patch) => set({ metroConfig: { ...get().metroConfig, ...patch } }),
 
+      units: 'imperial',
+      setUnits: (u) => set({ units: u }),
+      orientation: 'horizontal',
+      setOrientation: (o) => set({ orientation: o }),
+
       scrollOverlayOpen: false,
       openScrollOverlay: () => set({ scrollOverlayOpen: true }),
       closeScrollOverlay: () => set({ scrollOverlayOpen: false }),
@@ -698,6 +708,8 @@ export const useAppStore = create<AppStore>()(
         checklist: s.checklist,
         mapboxToken: s.mapboxToken,
         metroConfig: s.metroConfig,
+        units: s.units,
+        orientation: s.orientation,
       }),
     },
   ),

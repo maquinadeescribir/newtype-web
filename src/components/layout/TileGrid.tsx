@@ -67,22 +67,26 @@ const COLS = 6
 export default function TileGrid() {
   const tiles = useAppStore((s) => s.tiles)
   const medications = useAppStore((s) => s.medications)
+  const orientation = useAppStore((s) => s.orientation)
   const visible = tiles.filter((t) => t.visible)
+  const isVertical = orientation === 'vertical'
 
   // Reminder tiles flow in below the configured tiles, one per medication
   const maxRow = visible.reduce((m, t) => Math.max(m, t.position.row + tileRows(t.size)), 0)
 
   return (
-    <div className="grid">
+    <div className={`grid${isVertical ? ' orientation-vertical' : ''}`}>
       {visible.map((tile) => {
         const Built = BUILT_TILES[tile.type]
         const isMock = !Built
         const meta = TILE_META[tile.type]
         const isCharacter = tile.type === 'character'
-        const style: CSSProperties = {
-          gridColumn: isCharacter ? '1 / span 4' : `${tile.position.col + 1} / span ${tileCols(tile.size)}`,
-          gridRow: `${tile.position.row + 1} / span ${tileRows(tile.size)}`,
-        }
+        const style: CSSProperties = isVertical
+          ? { gridColumn: '1 / -1', gridRow: `span ${tileRows(tile.size)}` }
+          : {
+              gridColumn: isCharacter ? '1 / span 4' : `${tile.position.col + 1} / span ${tileCols(tile.size)}`,
+              gridRow: `${tile.position.row + 1} / span ${tileRows(tile.size)}`,
+            }
         return (
           <div key={tile.type} className={`tile tile-${tile.type}${isMock ? ' tile-mock' : ''}`} style={style}>
             {tile.type !== 'character' && tile.type !== 'env' && (
@@ -97,10 +101,12 @@ export default function TileGrid() {
       })}
 
       {medications.map((med, i) => {
-        const style: CSSProperties = {
-          gridColumn: `${(i % COLS) + 1} / span 1`,
-          gridRow: `${maxRow + Math.floor(i / COLS) + 1} / span 1`,
-        }
+        const style: CSSProperties = isVertical
+          ? { gridColumn: '1 / -1' }
+          : {
+              gridColumn: `${(i % COLS) + 1} / span 1`,
+              gridRow: `${maxRow + Math.floor(i / COLS) + 1} / span 1`,
+            }
         return (
           <div key={`med-${med.id}`} className="tile tile-med" style={style}>
             <MedTrackerTile medId={med.id} />

@@ -102,16 +102,23 @@ select {
 .dashboard {
   flex: 1;
   padding: 20px 22px 40px;
+  overflow-x: auto;
 }
 
 /* ---------- Grid ---------- */
 .grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(6, minmax(140px, 1fr));
   grid-auto-rows: 148px;
   gap: 16px;
   max-width: 1560px;
   margin: 0 auto;
+}
+
+/* ---------- Vertical (portrait) orientation ---------- */
+.grid.orientation-vertical {
+  grid-template-columns: 1fr;
+  max-width: 480px;
 }
 
 @media (max-width: 620px) {

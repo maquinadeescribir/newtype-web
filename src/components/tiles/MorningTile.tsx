@@ -159,6 +159,7 @@ export default function MorningTile() {
   const toggleChecklistItem = useAppStore((s) => s.toggleChecklistItem)
   const resetChecklist = useAppStore((s) => s.resetChecklist)
   const mapboxToken = useAppStore((s) => s.mapboxToken)
+  const units = useAppStore((s) => s.units)
   const timers = useAppStore((s) => s.timers)
   const pauseTimer = useAppStore((s) => s.pauseTimer)
   const resumeTimer = useAppStore((s) => s.resumeTimer)
@@ -181,13 +182,13 @@ export default function MorningTile() {
   const wantBoard = dayPart === 'morning' || dayPart === 'commuteTo' || dayPart === 'commuteFrom'
 
   // FR-RT-CC-01: live weather — poll 15 min (slow-moving data)
-  const weather = usePolling<{ temp: string; cond: string }>(
+  const weather = usePolling<{ tempC: number; cond: string }>(
     () =>
       fetch(WEATHER_URL)
         .then((r) => r.json())
         .then((d) =>
           d?.current_weather
-            ? { temp: `${Math.round(d.current_weather.temperature)}°`, cond: weatherLabel(d.current_weather.weathercode) }
+            ? { tempC: d.current_weather.temperature, cond: weatherLabel(d.current_weather.weathercode) }
             : null,
         ),
     15 * 60 * 1000,
@@ -305,7 +306,7 @@ export default function MorningTile() {
             ? `${shuttleStop.etaText} to ${shuttleStopShort}`
             : shuttleStop.etaText
           : 'no ETA'}
-      {shuttleStop?.distanceKm != null ? ` · ${shuttleStop.distanceKm.toFixed(1)} km` : ''}
+      {shuttleStop?.distanceKm != null ? ` · ${units === 'imperial' ? `${(shuttleStop.distanceKm * 0.621371).toFixed(1)} mi` : `${shuttleStop.distanceKm.toFixed(1)} km`}` : ''}
     </div>
   ) : null
 
@@ -650,7 +651,7 @@ export default function MorningTile() {
         </div>
         <div className="morning-status">
           <div className="morning-line">
-            <span className="morning-dot" /> Weather — {weather ? <b>{weather.temp} {weather.cond}</b> : <i>—</i>}
+            <span className="morning-dot" /> Weather — {weather ? <b>{units === 'imperial' ? `${Math.round(weather.tempC * 9 / 5 + 32)}°F` : `${Math.round(weather.tempC)}°C`} {weather.cond}</b> : <i>—</i>}
           </div>
           {trafficLine}
         </div>

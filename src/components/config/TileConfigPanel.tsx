@@ -22,6 +22,10 @@ export default function TileConfigPanel({ open, onClose }: { open: boolean; onCl
 
   const mapboxToken = useAppStore((s) => s.mapboxToken)
   const setMapboxToken = useAppStore((s) => s.setMapboxToken)
+  const units = useAppStore((s) => s.units)
+  const setUnits = useAppStore((s) => s.setUnits)
+  const orientation = useAppStore((s) => s.orientation)
+  const setOrientation = useAppStore((s) => s.setOrientation)
 
   const [reminder, setReminder] = useState<Medication | 'new' | null>(null)
   const [tokenDraft, setTokenDraft] = useState(mapboxToken)
@@ -140,6 +144,48 @@ export default function TileConfigPanel({ open, onClose }: { open: boolean; onCl
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+
+        <div className="config-section">
+          <h3>Units</h3>
+          <div className="config-row">
+            <span>Metric / Imperial</span>
+            <div className="tile-actions">
+              <button
+                className={`btn btn-sm ${units === 'imperial' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setUnits('imperial')}
+              >
+                Imperial
+              </button>
+              <button
+                className={`btn btn-sm ${units === 'metric' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setUnits('metric')}
+              >
+                Metric
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="config-section">
+          <h3>Layout</h3>
+          <div className="config-row">
+            <span>Orientation</span>
+            <div className="tile-actions">
+              <button
+                className={`btn btn-sm ${orientation === 'horizontal' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setOrientation('horizontal')}
+              >
+                Horizontal
+              </button>
+              <button
+                className={`btn btn-sm ${orientation === 'vertical' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setOrientation('vertical')}
+              >
+                Vertical
+              </button>
+            </div>
           </div>
         </div>
 
