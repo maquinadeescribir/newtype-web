@@ -19,7 +19,7 @@ jobs:
         working-directory: android
         run: |
           curl -sL -o /tmp/gradle.zip https://services.gradle.org/distributions/gradle-8.7-bin.zip
-          cd /tmp && unzip -q gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp
           /tmp/gradle-8.7/bin/gradle assembleDebug --no-daemon
       - name: Upload APK
         uses: actions/upload-artifact@v4
