@@ -96,6 +96,11 @@ interface AppStore {
   toggleWatch: (id: string) => void
   deleteInfluencer: (id: string) => void
 
+  vetQueue: { handle: string; at: number }[]
+  queueForVetting: (handle: string) => void
+  removeVetQueue: (at: number) => void
+  clearVetQueue: () => void
+
   activePanel: string | null
   setActivePanel: (p: string | null) => void
 
@@ -406,6 +411,17 @@ export const useAppStore = create<AppStore>()(
         if (x) get().logEvent('community', `Removed @${x.handle}`)
       },
 
+      vetQueue: [],
+      queueForVetting: (handle) => {
+        const h = handle.trim().replace(/^@/, '')
+        if (!h) return
+        if (get().vetQueue.some((v) => v.handle.toLowerCase() === h.toLowerCase())) return
+        set({ vetQueue: [{ handle: h, at: Date.now() }, ...get().vetQueue] })
+        get().logEvent('community', `Queued for vetting: @${h}`)
+      },
+      removeVetQueue: (at) => set({ vetQueue: get().vetQueue.filter((v) => v.at !== at) }),
+      clearVetQueue: () => set({ vetQueue: [] }),
+
       activePanel: null,
       setActivePanel: (p) => set({ activePanel: p }),
 
@@ -680,6 +696,7 @@ export const useAppStore = create<AppStore>()(
         medications: s.medications,
         goals: s.goals,
         influencers: s.influencers,
+        vetQueue: s.vetQueue,
         log: s.log,
         hyperfixation: s.hyperfixation,
         hyperfixationItems: s.hyperfixationItems,

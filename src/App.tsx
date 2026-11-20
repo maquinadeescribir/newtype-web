@@ -20,6 +20,7 @@ import WeightPanel from './components/WeightPanel'
 import AyudamePanel from './components/AyudamePanel'
 import EdcPanel from './components/EdcPanel'
 import EnvPanel from './components/EnvPanel'
+import VetCheck from './components/VetCheck'
 import { useScrollIntervention } from './hooks/useScrollIntervention'
 import { HYPERFIXATION_TOPICS } from './data/hyperfixations'
 import type { CommunityVariant } from './types'
@@ -83,6 +84,7 @@ export default function App() {
       )}
 
       <ScrollOverlay />
+      <VetCheck />
       <TileConfigPanel open={configOpen} onClose={() => setConfigOpen(false)} />
       {activePanel?.startsWith('community') && (
         <CommunityPanel initialTab={activePanel.split(':')[1] as CommunityVariant} />

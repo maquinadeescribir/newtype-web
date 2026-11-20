@@ -3154,3 +3154,132 @@ a.hf-item-text:hover {
   pointer-events: none;
 }
 .char-daypart-emoji { font-size: 15px; }
+
+/* ---------- Vet check (floating creator check) ---------- */
+.vet-fab {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 90;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent, #4f46e5);
+  color: #fff;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.vet-fab:hover {
+  filter: brightness(1.12);
+  transform: translateY(-2px);
+}
+.vet-fab-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface, #0d1117);
+}
+.vet-panel {
+  max-width: 720px;
+}
+.vet-filters {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.vet-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vet-row {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.vet-row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.vet-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+.vet-sub {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.vet-badge {
+  font-size: 12px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.vet-genuine {
+  background: rgba(34, 197, 94, 0.16);
+  color: #4ade80;
+}
+.vet-selling {
+  background: rgba(234, 179, 8, 0.16);
+  color: #facc15;
+}
+.vet-scam {
+  background: rgba(239, 68, 68, 0.16);
+  color: #f87171;
+}
+.vet-other {
+  background: rgba(148, 163, 184, 0.16);
+  color: #94a3b8;
+}
+.vet-focus {
+  font-size: 14px;
+  color: var(--text);
+  margin-top: 5px;
+  line-height: 1.45;
+}
+.vet-meta {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.vet-notes {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.vet-notfound {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.vet-queue {
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
