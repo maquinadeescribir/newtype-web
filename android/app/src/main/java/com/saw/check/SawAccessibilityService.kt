@@ -63,8 +63,12 @@ class SawAccessibilityService : AccessibilityService() {
     }
 
     private fun findAppRoot(): AccessibilityNodeInfo? {
-        // Pick the app window BEHIND our overlay (skip our own floating panel/FAB),
-        // so the panel being open doesn't shadow the app we're trying to read.
+        // Prefer the ACTIVE window (the true foreground app) unless it's our own overlay.
+        val active = rootInActiveWindow
+        if (active != null && active.packageName?.toString() != packageName) {
+            return active
+        }
+        // Overlay is focused (or no active window) — find the app window behind it.
         for (w in windows) {
             val root = w.root ?: continue
             val pkg = root.packageName?.toString()
@@ -72,7 +76,7 @@ class SawAccessibilityService : AccessibilityService() {
                 return root
             }
         }
-        return rootInActiveWindow
+        return active
     }
 
     private fun collectCandidates(node: AccessibilityNodeInfo, out: ArrayList<Candidate>) {

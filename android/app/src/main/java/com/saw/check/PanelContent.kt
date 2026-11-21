@@ -45,6 +45,7 @@ fun VetPanel(autoCapture: Boolean = false, onClose: (() -> Unit)? = null) {
     var query by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf("all") }
     var queue by remember { mutableStateOf(QueueStore.load(ctx)) }
+    var captureFailed by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         try {
@@ -52,7 +53,8 @@ fun VetPanel(autoCapture: Boolean = false, onClose: (() -> Unit)? = null) {
                 entries = withContext(Dispatchers.IO) { VetDirectory.fetch() }
             }
             if (autoCapture) {
-                runCatching { SawAccessibilityService.captureUsername() }.getOrNull()?.let { query = it }
+                val h = runCatching { SawAccessibilityService.captureUsername() }.getOrNull()
+                if (h != null) query = h else captureFailed = true
             }
         } catch (_: Exception) {
         } finally {
@@ -82,7 +84,10 @@ fun VetPanel(autoCapture: Boolean = false, onClose: (() -> Unit)? = null) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Creator check", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Creator check", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("v${BuildConfig.VERSION_NAME}", fontSize = 10.sp, color = Color(0xFF64748B))
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 TextButton(onClick = { SawAccessibilityService.captureUsername()?.let { query = it } }) {
                     Text("🖼 capture", color = Color(0xFF94A3B8))
@@ -110,6 +115,15 @@ fun VetPanel(autoCapture: Boolean = false, onClose: (() -> Unit)? = null) {
         if (loading) {
             Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
+            }
+        } else if (captureFailed && q.isEmpty()) {
+            Column(
+                Modifier.fillMaxWidth().weight(1f).padding(top = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text("Couldn't read the screen.", color = Color(0xFF94A3B8))
+                Spacer(Modifier.height(6.dp))
+                Text("Tap 🖼 capture, or type a handle above.", color = Color(0xFF64748B), fontSize = 13.sp)
             }
         } else if (notFound) {
             Column(
