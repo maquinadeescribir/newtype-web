@@ -19,6 +19,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,6 +56,7 @@ private fun SetupScreen(@Suppress("UNUSED_PARAMETER") refreshKey: Int) {
     val ctx = LocalContext.current
     val canDraw = Settings.canDrawOverlays(ctx)
     val accEnabled = SawAccessibilityService.isEnabled(ctx)
+    var crashText by remember(refreshKey) { mutableStateOf(App.readCrash(ctx)) }
 
     Column(Modifier.fillMaxSize().padding(20.dp)) {
         Text("Saw Check", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -109,6 +111,13 @@ private fun SetupScreen(@Suppress("UNUSED_PARAMETER") refreshKey: Int) {
             fontSize = 13.sp,
             color = Color(0xFF94A3B8),
         )
+
+        crashText?.let { crash ->
+            HorizontalDivider(Modifier.padding(vertical = 12.dp))
+            Text("Last crash (send me a screenshot):", color = Color(0xFFF87171), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            Text(crash, color = Color(0xFFFCA5A5), fontSize = 10.sp, maxLines = 14, modifier = Modifier.padding(top = 4.dp))
+            TextButton(onClick = { App.clearCrash(ctx); crashText = null }) { Text("clear") }
+        }
     }
 }
 

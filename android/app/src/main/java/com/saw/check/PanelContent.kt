@@ -34,6 +34,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun VetPanel(autoCapture: Boolean = false, onClose: (() -> Unit)? = null) {
@@ -45,12 +47,16 @@ fun VetPanel(autoCapture: Boolean = false, onClose: (() -> Unit)? = null) {
     var queue by remember { mutableStateOf(QueueStore.load(ctx)) }
 
     LaunchedEffect(Unit) {
-        if (VetDirectory.entries.isEmpty()) {
-            entries = VetDirectory.fetch()
-        }
-        loading = false
-        if (autoCapture) {
-            SawAccessibilityService.captureUsername()?.let { query = it }
+        try {
+            if (VetDirectory.entries.isEmpty()) {
+                entries = withContext(Dispatchers.IO) { VetDirectory.fetch() }
+            }
+            if (autoCapture) {
+                runCatching { SawAccessibilityService.captureUsername() }.getOrNull()?.let { query = it }
+            }
+        } catch (_: Exception) {
+        } finally {
+            loading = false
         }
     }
 
