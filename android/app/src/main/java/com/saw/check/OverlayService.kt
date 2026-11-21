@@ -16,6 +16,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.setViewTreeLifecycleOwner
 
 class OverlayService : Service() {
 
@@ -120,13 +124,25 @@ class OverlayService : Service() {
         lp.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
         lp.y = dp(16)
 
-        val composeView = ComposeView(this).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-            setContent {
+        val composeView = ComposeView(this)
+        // ComposeView inside a WindowManager overlay has no Activity to supply a
+        // LifecycleOwner — provide one manually or setContent crashes.
+        val lifecycleOwner = object : LifecycleOwner {
+            private val registry = LifecycleRegistry(this)
+            override val lifecycle: Lifecycle get() = registry
+            init { registry.currentState = Lifecycle.State.RESUMED }
+        }
+        composeView.setViewTreeLifecycleOwner(lifecycleOwner)
+        composeView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
+        try {
+            composeView.setContent {
                 MaterialTheme(colorScheme = darkColorScheme()) {
                     VetPanel(autoCapture = true, onClose = { removePanel() })
                 }
             }
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(this, "Panel error: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            return
         }
 
         panel = composeView
