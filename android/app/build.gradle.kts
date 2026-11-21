@@ -16,7 +16,7 @@ android {
     }
 
     signingConfigs {
-        create("debug") {
+        getByName("debug") {
             storeFile = rootProject.file("saw-check.keystore")
             storePassword = "android"
             keyAlias = "sawcheck"
