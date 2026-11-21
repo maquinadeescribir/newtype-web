@@ -6,6 +6,7 @@ import android.content.Context
 import android.provider.Settings
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 
 class SawAccessibilityService : AccessibilityService() {
 
@@ -87,20 +88,20 @@ class SawAccessibilityService : AccessibilityService() {
     }
 
     private fun findAppRoot(): AccessibilityNodeInfo? {
-        // Prefer the ACTIVE window (the true foreground app) unless it's our own overlay.
-        val active = rootInActiveWindow
-        if (active != null && active.packageName?.toString() != packageName) {
-            return active
-        }
-        // Overlay is focused (or no active window) — find the app window behind it.
+        // The active window is usually OUR overlay (the search box steals focus),
+        // so find the real app window in `windows`: an application window that is
+        // neither our package nor system UI.
         for (w in windows) {
+            if (w.type != AccessibilityWindowInfo.TYPE_APPLICATION) continue
             val root = w.root ?: continue
-            val pkg = root.packageName?.toString()
-            if (pkg != null && pkg != packageName) {
-                return root
-            }
+            val pkg = root.packageName?.toString() ?: continue
+            if (pkg == packageName || pkg == "com.android.systemui") continue
+            return root
         }
-        return active
+        // Fallback: the active window if it's a real app.
+        val active = rootInActiveWindow
+        if (active != null && active.packageName?.toString() != packageName) return active
+        return null
     }
 
     private fun collectCandidates(node: AccessibilityNodeInfo, out: ArrayList<Candidate>) {
