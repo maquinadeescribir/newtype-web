@@ -38,10 +38,23 @@ class SawAccessibilityService : AccessibilityService() {
     }
 
     fun captureFromScreen(): String? {
-        val root = rootInActiveWindow ?: return null
+        val root = findAppRoot() ?: return null
         val counts = HashMap<String, Int>()
         collectHandles(root, counts)
         return counts.maxByOrNull { it.value }?.key
+    }
+
+    private fun findAppRoot(): AccessibilityNodeInfo? {
+        // Pick the app window BEHIND our overlay (skip our own floating panel/FAB),
+        // so the panel being open doesn't shadow the app we're trying to read.
+        for (w in windows) {
+            val root = w.root ?: continue
+            val pkg = root.packageName?.toString()
+            if (pkg != null && pkg != packageName) {
+                return root
+            }
+        }
+        return rootInActiveWindow
     }
 
     private fun collectHandles(node: AccessibilityNodeInfo, counts: HashMap<String, Int>) {

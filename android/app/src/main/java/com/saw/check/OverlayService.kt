@@ -70,7 +70,10 @@ class OverlayService : Service() {
         btn.setBackgroundColor(0xFF4F46E5.toInt())
         btn.setTextColor(0xFFFFFFFF.toInt())
         btn.alpha = 0.92f
-        btn.setOnClickListener { togglePanel() }
+        btn.setOnClickListener {
+            removePanel()
+            addPanel()
+        }
 
         btn.setOnTouchListener(object : View.OnTouchListener {
             private var startX = 0f
@@ -106,11 +109,6 @@ class OverlayService : Service() {
 
         fab = btn
         windowManager.addView(btn, lp)
-    }
-
-    private fun togglePanel() {
-        if (panel != null) { removePanel(); return }
-        addPanel()
     }
 
     private fun addPanel() {
