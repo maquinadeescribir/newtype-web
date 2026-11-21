@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,7 +60,12 @@ private fun SetupScreen(@Suppress("UNUSED_PARAMETER") refreshKey: Int) {
     val accEnabled = SawAccessibilityService.isEnabled(ctx)
     var crashText by remember(refreshKey) { mutableStateOf(App.readCrash(ctx)) }
 
-    Column(Modifier.fillMaxSize().padding(20.dp)) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(20.dp),
+    ) {
         Text("Saw Check", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White)
         Text("Floating creator check — floats over every app", fontSize = 14.sp, color = Color(0xFF94A3B8))
         Spacer(Modifier.height(20.dp))

@@ -13,7 +13,16 @@ class App : Application() {
             try {
                 val sw = StringWriter()
                 throwable.printStackTrace(PrintWriter(sw))
-                openFileOutput(CRASH_FILE, MODE_PRIVATE).use { it.write(sw.toString().toByteArray()) }
+                val version = try {
+                    packageManager.getPackageInfo(packageName, 0).versionName ?: "?"
+                } catch (_: Exception) {
+                    "?"
+                }
+                val ts = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US)
+                    .format(java.util.Date())
+                openFileOutput(CRASH_FILE, MODE_PRIVATE).use {
+                    it.write(("Saw Check v$version · $ts\n\n" + sw).toByteArray())
+                }
             } catch (_: Exception) {
             }
             default?.uncaughtException(thread, throwable)
