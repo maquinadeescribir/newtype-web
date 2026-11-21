@@ -20,6 +20,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryController
+import androidx.savedstate.SavedStateRegistryOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 
 class OverlayService : Service() {
 
@@ -133,6 +137,12 @@ class OverlayService : Service() {
             init { registry.currentState = Lifecycle.State.RESUMED }
         }
         composeView.setViewTreeLifecycleOwner(lifecycleOwner)
+        val savedStateRegistryOwner = object : SavedStateRegistryOwner {
+            private val controller = SavedStateRegistryController.create(this)
+            override val savedStateRegistry: SavedStateRegistry get() = controller.savedStateRegistry
+            init { controller.performRestore(null) }
+        }
+        composeView.setViewTreeSavedStateRegistryOwner(savedStateRegistryOwner)
         composeView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
         try {
             composeView.setContent {
