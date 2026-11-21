@@ -1,6 +1,8 @@
 package com.saw.check
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Context
+import android.provider.Settings
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
@@ -11,6 +13,14 @@ class SawAccessibilityService : AccessibilityService() {
         var instance: SawAccessibilityService? = null
 
         fun captureUsername(): String? = instance?.captureFromScreen()
+
+        fun isEnabled(ctx: Context): Boolean {
+            val services = Settings.Secure.getString(
+                ctx.contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+            ) ?: return false
+            return services.split(':').any { it.contains(ctx.packageName) }
+        }
     }
 
     override fun onServiceConnected() {

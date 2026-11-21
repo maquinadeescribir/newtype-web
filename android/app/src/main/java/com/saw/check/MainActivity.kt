@@ -33,25 +33,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
+    private val tick = mutableStateOf(0)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                SetupScreen()
+                SetupScreen(tick.value)
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        tick.value++
     }
 }
 
 @Composable
-private fun SetupScreen() {
+private fun SetupScreen(@Suppress("UNUSED_PARAMETER") refreshKey: Int) {
     val ctx = LocalContext.current
-    var tick by remember { mutableStateOf(0) }
-
-    fun refresh() { tick++ }
-
     val canDraw = Settings.canDrawOverlays(ctx)
-    val accEnabled = SawAccessibilityService.instance != null
+    val accEnabled = SawAccessibilityService.isEnabled(ctx)
 
     Column(Modifier.fillMaxSize().padding(20.dp)) {
         Text("Saw Check", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -84,7 +87,7 @@ private fun SetupScreen() {
 
         if (canDraw && accEnabled) {
             Button(
-                onClick = { OverlayService.start(ctx); refresh() },
+                onClick = { OverlayService.start(ctx) },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Start floating button") }
             Spacer(Modifier.height(8.dp))
@@ -92,7 +95,7 @@ private fun SetupScreen() {
 
         if (canDraw) {
             OutlinedButton(
-                onClick = { OverlayService.stop(ctx); refresh() },
+                onClick = { OverlayService.stop(ctx) },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Stop floating button") }
             Spacer(Modifier.height(20.dp))
