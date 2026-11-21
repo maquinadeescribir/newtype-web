@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Saw Check</string>
+    <string name="accessibility_label">Saw Check — screen username capture</string>
+    <string name="accessibility_desc">Reads the username from the current app so you can check it against the creator directory. No data is collected, stored, or shared.</string>
 </resources>
