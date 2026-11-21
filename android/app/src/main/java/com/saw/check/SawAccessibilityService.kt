@@ -38,7 +38,7 @@ class SawAccessibilityService : AccessibilityService() {
         super.onDestroy()
     }
 
-    private data class Candidate(val handle: String, val top: Int, val at: Boolean)
+    private data class Candidate(val handle: String, val top: Int, val size: Float, val at: Boolean)
 
     private val STOPWORDS = setOf(
         "the", "and", "for", "you", "your", "are", "not", "this", "that", "with", "from",
@@ -46,7 +46,9 @@ class SawAccessibilityService : AccessibilityService() {
         "new", "video", "videos", "sound", "follow", "following", "followers", "likes",
         "share", "comment", "comments", "suggested", "more", "home", "now", "today",
         "profile", "edit", "message", "messages", "foryou", "fyp", "live", "shop", "post",
-        "posts", "reply", "replies", "see", "all", "view", "views"
+        "posts", "reply", "replies", "see", "all", "view", "views", "learn", "high",
+        "performer", "engineer", "diagnosed", "creator", "theory", "domino", "take",
+        "free", "quiz", "link", "bio", "adhd", "late", "gut", "brain", "coach"
     )
 
     fun captureFromScreen(): String? {
@@ -54,10 +56,12 @@ class SawAccessibilityService : AccessibilityService() {
         val candidates = ArrayList<Candidate>()
         collectCandidates(root, candidates)
         if (candidates.isEmpty()) return null
-        // The profile/video-creator handle sits at the TOP of the screen.
-        // Pick the top-most candidate; @-prefixed breaks ties.
-        val best = candidates.minWithOrNull(
-            compareBy<Candidate> { it.top }.thenBy { if (it.at) 0 else 1 }
+        // Prefer the LARGEST text (the profile header username), then the highest
+        // position, then @-prefixed.
+        val best = candidates.maxWithOrNull(
+            compareBy<Candidate> { it.size }
+                .thenBy { -it.top.toLong() }
+                .thenBy { if (it.at) 1 else 0 }
         )
         return best?.handle
     }
@@ -83,17 +87,16 @@ class SawAccessibilityService : AccessibilityService() {
         val bounds = Rect()
         node.getBoundsInScreen(bounds)
         val top = bounds.top
+        val size = if (node.textSize > 0f) node.textSize else 0f
         node.text?.toString()?.let { text ->
-            Regex("@([\\w._]{2,30})").findAll(text).forEach { m ->
-                out.add(Candidate(m.groupValues[1], top, true))
+            Regex("@([a-zA-Z0-9._]{2,30})").findAll(text).forEach { m ->
+                out.add(Candidate(m.groupValues[1], top, size, true))
             }
-            val t = text.trim()
-            if (t.length in 3..30 && t.none { it.isWhitespace() } &&
-                t.firstOrNull()?.isLowerCase() == true &&
-                t.all { it.isLowerCase() || it.isDigit() || it == '.' || it == '_' } &&
-                t !in STOPWORDS
-            ) {
-                out.add(Candidate(t, top, false))
+            Regex("\\b([a-z][a-z0-9._]{2,29})\\b").findAll(text).forEach { m ->
+                val t = m.groupValues[1]
+                if (t !in STOPWORDS && (t.length >= 6 || t.any { it.isDigit() || it == '_' || it == '.' })) {
+                    out.add(Candidate(t, top, size, false))
+                }
             }
         }
         for (i in 0 until node.childCount) {
