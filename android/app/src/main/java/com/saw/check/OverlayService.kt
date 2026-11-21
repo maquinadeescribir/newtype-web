@@ -137,8 +137,8 @@ class OverlayService : Service() {
             private val controller = SavedStateRegistryController.create(this)
             override val savedStateRegistry: SavedStateRegistry get() = controller.savedStateRegistry
             init {
-                lifecycleRegistry.currentState = Lifecycle.State.RESUMED
                 controller.performRestore(null)
+                lifecycleRegistry.currentState = Lifecycle.State.RESUMED
             }
         }
         composeView.setViewTreeLifecycleOwner(owner)
