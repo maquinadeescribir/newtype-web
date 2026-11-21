@@ -131,18 +131,18 @@ class OverlayService : Service() {
         val composeView = ComposeView(this)
         // ComposeView inside a WindowManager overlay has no Activity to supply a
         // LifecycleOwner — provide one manually or setContent crashes.
-        val lifecycleOwner = object : LifecycleOwner {
-            private val registry = LifecycleRegistry(this)
-            override val lifecycle: Lifecycle get() = registry
-            init { registry.currentState = Lifecycle.State.RESUMED }
-        }
-        composeView.setViewTreeLifecycleOwner(lifecycleOwner)
-        val savedStateRegistryOwner = object : SavedStateRegistryOwner {
+        val owner = object : SavedStateRegistryOwner {
+            private val lifecycleRegistry = LifecycleRegistry(this)
+            override val lifecycle: Lifecycle get() = lifecycleRegistry
             private val controller = SavedStateRegistryController.create(this)
             override val savedStateRegistry: SavedStateRegistry get() = controller.savedStateRegistry
-            init { controller.performRestore(null) }
+            init {
+                lifecycleRegistry.currentState = Lifecycle.State.RESUMED
+                controller.performRestore(null)
+            }
         }
-        composeView.setViewTreeSavedStateRegistryOwner(savedStateRegistryOwner)
+        composeView.setViewTreeLifecycleOwner(owner)
+        composeView.setViewTreeSavedStateRegistryOwner(owner)
         composeView.setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
         try {
             composeView.setContent {
