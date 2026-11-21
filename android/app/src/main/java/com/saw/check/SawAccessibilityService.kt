@@ -15,6 +15,11 @@ class SawAccessibilityService : AccessibilityService() {
 
         fun captureUsername(): String? = instance?.captureFromScreen()
 
+        fun captureDebug(): String {
+            val s = instance ?: return "service=NOT_CONNECTED"
+            return s.debugCapture()
+        }
+
         fun isEnabled(ctx: Context): Boolean {
             val services = Settings.Secure.getString(
                 ctx.contentResolver,
@@ -62,6 +67,23 @@ class SawAccessibilityService : AccessibilityService() {
             compareBy<Candidate> { it.top }.thenBy { if (it.at) 0 else 1 }
         )
         return best?.handle
+    }
+
+    fun debugCapture(): String {
+        return try {
+            val activePkg = rootInActiveWindow?.packageName?.toString() ?: "null"
+            val winPkgs = windows.mapNotNull { runCatching { it.root?.packageName?.toString() }.getOrNull() }
+            val root = findAppRoot()
+            val rootPkg = root?.packageName?.toString() ?: "null"
+            val cands = if (root != null) {
+                val c = ArrayList<Candidate>()
+                collectCandidates(root, c)
+                c.size
+            } else -1
+            "active=$activePkg wins=$winPkgs root=$rootPkg cands=$cands"
+        } catch (e: Exception) {
+            "debug-error: ${e.message}"
+        }
     }
 
     private fun findAppRoot(): AccessibilityNodeInfo? {

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -46,6 +47,7 @@ fun VetPanel(autoCapture: Boolean = false, onClose: (() -> Unit)? = null) {
     var filter by remember { mutableStateOf("all") }
     var queue by remember { mutableStateOf(QueueStore.load(ctx)) }
     var captureFailed by remember { mutableStateOf(false) }
+    var debugInfo by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         try {
@@ -53,8 +55,16 @@ fun VetPanel(autoCapture: Boolean = false, onClose: (() -> Unit)? = null) {
                 entries = withContext(Dispatchers.IO) { VetDirectory.fetch() }
             }
             if (autoCapture) {
-                val h = runCatching { SawAccessibilityService.captureUsername() }.getOrNull()
-                if (h != null) query = h else captureFailed = true
+                var h: String? = null
+                for (attempt in 0 until 3) {
+                    h = runCatching { SawAccessibilityService.captureUsername() }.getOrNull()
+                    if (h != null) break
+                    delay(250)
+                }
+                if (h != null) query = h else {
+                    captureFailed = true
+                    debugInfo = SawAccessibilityService.captureDebug()
+                }
             }
         } catch (_: Exception) {
         } finally {
@@ -124,6 +134,10 @@ fun VetPanel(autoCapture: Boolean = false, onClose: (() -> Unit)? = null) {
                 Text("Couldn't read the screen.", color = Color(0xFF94A3B8))
                 Spacer(Modifier.height(6.dp))
                 Text("Tap 🖼 capture, or type a handle above.", color = Color(0xFF64748B), fontSize = 13.sp)
+                if (debugInfo.isNotBlank()) {
+                    Spacer(Modifier.height(12.dp))
+                    Text(debugInfo, color = Color(0xFF475569), fontSize = 9.sp)
+                }
             }
         } else if (notFound) {
             Column(
