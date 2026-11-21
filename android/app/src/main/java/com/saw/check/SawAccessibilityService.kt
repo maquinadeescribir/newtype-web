@@ -1,6 +1,7 @@
 package com.saw.check
 
 import android.accessibilityservice.AccessibilityService
+import android.graphics.Rect
 import android.content.Context
 import android.provider.Settings
 import android.view.accessibility.AccessibilityEvent
@@ -37,11 +38,28 @@ class SawAccessibilityService : AccessibilityService() {
         super.onDestroy()
     }
 
+    private data class Candidate(val handle: String, val top: Int, val at: Boolean)
+
+    private val STOPWORDS = setOf(
+        "the", "and", "for", "you", "your", "are", "not", "this", "that", "with", "from",
+        "have", "has", "was", "were", "will", "would", "about", "just", "like", "love",
+        "new", "video", "videos", "sound", "follow", "following", "followers", "likes",
+        "share", "comment", "comments", "suggested", "more", "home", "now", "today",
+        "profile", "edit", "message", "messages", "foryou", "fyp", "live", "shop", "post",
+        "posts", "reply", "replies", "see", "all", "view", "views"
+    )
+
     fun captureFromScreen(): String? {
         val root = findAppRoot() ?: return null
-        val counts = HashMap<String, Int>()
-        collectHandles(root, counts)
-        return counts.maxByOrNull { it.value }?.key
+        val candidates = ArrayList<Candidate>()
+        collectCandidates(root, candidates)
+        if (candidates.isEmpty()) return null
+        // The profile/video-creator handle sits at the TOP of the screen.
+        // Pick the top-most candidate; @-prefixed breaks ties.
+        val best = candidates.minWithOrNull(
+            compareBy<Candidate> { it.top }.thenBy { if (it.at) 0 else 1 }
+        )
+        return best?.handle
     }
 
     private fun findAppRoot(): AccessibilityNodeInfo? {
@@ -57,15 +75,25 @@ class SawAccessibilityService : AccessibilityService() {
         return rootInActiveWindow
     }
 
-    private fun collectHandles(node: AccessibilityNodeInfo, counts: HashMap<String, Int>) {
+    private fun collectCandidates(node: AccessibilityNodeInfo, out: ArrayList<Candidate>) {
+        val bounds = Rect()
+        node.getBoundsInScreen(bounds)
+        val top = bounds.top
         node.text?.toString()?.let { text ->
-            Regex("@[\\w._]+").findAll(text).forEach { m ->
-                val h = m.value
-                counts[h] = (counts[h] ?: 0) + 1
+            Regex("@([\\w._]{2,30})").findAll(text).forEach { m ->
+                out.add(Candidate(m.groupValues[1], top, true))
+            }
+            val t = text.trim()
+            if (t.length in 3..30 && t.none { it.isWhitespace() } &&
+                t.firstOrNull()?.isLowerCase() == true &&
+                t.all { it.isLowerCase() || it.isDigit() || it == '.' || it == '_' } &&
+                t !in STOPWORDS
+            ) {
+                out.add(Candidate(t, top, false))
             }
         }
         for (i in 0 until node.childCount) {
-            node.getChild(i)?.let { collectHandles(it, counts) }
+            node.getChild(i)?.let { collectCandidates(it, out) }
         }
     }
 }
