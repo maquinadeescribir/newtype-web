@@ -25,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -48,6 +50,8 @@ fun VetPanel(autoCapture: Boolean = false, onClose: (() -> Unit)? = null) {
     var queue by remember { mutableStateOf(QueueStore.load(ctx)) }
     var captureFailed by remember { mutableStateOf(false) }
     var debugInfo by remember { mutableStateOf("") }
+    var uploadState by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         try {
@@ -122,6 +126,56 @@ fun VetPanel(autoCapture: Boolean = false, onClose: (() -> Unit)? = null) {
             }
         }
 
+        if (queue.isNotEmpty()) {
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Queued for vetting (${queue.size})", fontSize = 13.sp, color = Color(0xFF94A3B8))
+                Button(
+                    onClick = {
+                        scope.launch {
+                            uploadState = "uploading"
+                            val ok = withContext(Dispatchers.IO) { VetQueueUpload.upload(queue) }
+                            uploadState = if (ok) "ok" else "err"
+                        }
+                    },
+                    enabled = uploadState != "uploading",
+                ) {
+                    Text(
+                        when (uploadState) {
+                            "uploading" -> "Uploading…"
+                            "ok" -> "Uploaded ✓"
+                            "err" -> "Retry"
+                            else -> "Upload queue"
+                        },
+                        fontSize = 12.sp,
+                    )
+                }
+            }
+            if (uploadState == "ok") {
+                Text(
+                    "Sent — I'll vet these and add them to the directory.",
+                    color = Color(0xFF4ADE80),
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+            Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                queue.forEach { h ->
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text("@$h", color = Color.White, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                        TextButton(onClick = {
+                            queue = queue.filter { it != h }
+                            QueueStore.save(ctx, queue)
+                        }) { Text("✕", color = Color(0xFF94A3B8)) }
+                    }
+                }
+            }
+        }
+
         if (loading) {
             Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -160,22 +214,6 @@ fun VetPanel(autoCapture: Boolean = false, onClose: (() -> Unit)? = null) {
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 items(results) { e -> EntryCard(e) }
-            }
-        }
-
-        if (queue.isNotEmpty()) {
-            HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            Text("Queued for vetting (${queue.size})", fontSize = 13.sp, color = Color(0xFF94A3B8))
-            Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                queue.forEach { h ->
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text("@$h", color = Color.White, fontSize = 13.sp, modifier = Modifier.weight(1f))
-                        TextButton(onClick = {
-                            queue = queue.filter { it != h }
-                            QueueStore.save(ctx, queue)
-                        }) { Text("✕", color = Color(0xFF94A3B8)) }
-                    }
-                }
             }
         }
     }

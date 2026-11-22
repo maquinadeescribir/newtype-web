@@ -58,3 +58,23 @@ object VetDirectory {
         return out
     }
 }
+
+object VetQueueUpload {
+    const val UPLOAD_URL = "https://saw-proxy.neurospicyass.workers.dev/vetqueue"
+
+    fun upload(handles: List<String>): Boolean {
+        return try {
+            val conn = URL(UPLOAD_URL).openConnection() as HttpURLConnection
+            conn.connectTimeout = 10000
+            conn.readTimeout = 10000
+            conn.requestMethod = "POST"
+            conn.doOutput = true
+            conn.setRequestProperty("Content-Type", "application/json")
+            val payload = "{\"handles\":${JSONArray(handles)}}"
+            conn.outputStream.use { it.write(payload.toByteArray(Charsets.UTF_8)) }
+            conn.responseCode in 200..299
+        } catch (e: Exception) {
+            false
+        }
+    }
+}
